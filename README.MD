@@ -29,9 +29,13 @@ The APM uses CommonData in the "dnhapm" area for configuration. To set configura
 EVENT_DNHAPM_FINALIZE = GetAreaCommonData("dnhapm", "FinalizeEvent", EV_USER_STAGE + 2048);
 OUTPUT_DIRECTORY = GetAreaCommonData("dnhapm", "OutputDirectory", GetCurrentScriptDirectory() ~ "./dnhapm-output/");
 SCRIPT_NAME = GetAreaCommonData("dnhapm", "ScriptName", "--Unnamed Script--");
+ENABLE_AGGREGATE = GetAreaCommonData("dnhapm", "EnableAggregate", true);
+GRAPH_SCALE = GetAreaCommonData("dnhapm", "GraphScale", 1);
 ```
 
 Basic configuration for the APM allows you to set the Event that is used to trigger writing the report (defaults to `EV_USER_STAGE + 2048`), the output directory of the report (defaults to `GetCurrentScriptDirectory() ~ "./dnhapm-output/"`), and the name of the script within the report (defaults to `"--Unnamed Script--"`).
+
+Aggregate will load past data in the OUTPUT_DIRECTORY into the graphs (defaults to `true`). GRAPH_SCALE is the scale of the x axis of the graph (defaults to `1`, or one pixel per second). This means that a 5 minute script will fit into 300 pixels at default scale, or 600 pixels at a scale of 2.
 
 #### Specific Configuration
 

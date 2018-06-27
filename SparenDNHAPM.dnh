@@ -23,8 +23,8 @@ let finished = false;
 let EVENT_DNHAPM_FINALIZE; // Event to call via NotifyEvent/NotifyEventAll when the user wishes to generate the output report.
 let OUTPUT_DIRECTORY; // Directory to output the report to
 let SCRIPT_NAME; // Name of the script being monitored
-//let ENABLE_AGGREGATE; // Whether or not to aggregate all data in directory when making graphs
-//let GRAPH_SCALE; // Scale of the x axis on the graph. To be implemented later.
+let ENABLE_AGGREGATE; // Whether or not to aggregate all data in directory when making graphs
+let GRAPH_SCALE; // Scale of the x axis on the graph. To be implemented later.
 
 // Feature Set Customization
 let FEATURE_FPS_ENABLE; // Enable or disable FPS logging
@@ -43,6 +43,8 @@ let FEATURE_FPS_LINECOLOR; // Color of the line, in HTML supported color
     EVENT_DNHAPM_FINALIZE = GetAreaCommonData("dnhapm", "FinalizeEvent", EV_USER_STAGE + 2048);
     OUTPUT_DIRECTORY = GetAreaCommonData("dnhapm", "OutputDirectory", currdir ~ "./dnhapm-output/");
     SCRIPT_NAME = GetAreaCommonData("dnhapm", "ScriptName", "--Unnamed Script--");
+    ENABLE_AGGREGATE = GetAreaCommonData("dnhapm", "EnableAggregate", true);
+    GRAPH_SCALE = GetAreaCommonData("dnhapm", "GraphScale", 1);
 
     FEATURE_FPS_ENABLE = GetAreaCommonData("dnhapm", "FPSEnable", true);
     FEATURE_FPS_UPDATEFREQ = GetAreaCommonData("dnhapm", "FPSUpdateFreq", 10);
@@ -67,6 +69,7 @@ let FEATURE_FPS_LINECOLOR; // Color of the line, in HTML supported color
     yield;
 }
 
+/* ---------------- FPS Logging ---------------- */
 task APM_StartFPS {
     // Create output file
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
@@ -88,6 +91,62 @@ task APM_StartFPS {
     // Flush to file
     ObjFileT_AddLine(outputfile, log);
     ObjFile_Store(outputfile);
+}
+
+function APM_ChartGenFPS {
+    let svg = SVGChartGen;
+    // Add y axis labels
+
+    // Add paths
+
+    // Close SVG
+    svg = svg ~ "</svg>";
+    return svg;
+}
+
+/* ---------------- Report Generation ---------------- */
+
+// Returns the SVG chart with everything except for paths and y axis labels.
+function SVGChartGen {
+    let svg_width = elapsedtime * GRAPH_SCALE / 60 + 96; // By default, a second is one pixel. 64 pixel buffer for left sidebar, 32 for right sidebar
+    let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" ~ ToString(svg_width) ~ "\" height=\"400\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">";
+    svg = svg ~ "<path d=\"M 64 304 H " ~ ToString(svg_width) ~ "\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
+    svg = svg ~ "<path d=\"M 64 304 V 0\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
+    // Plot the labels on the x axis every 48 * GRAPH_SCALE seconds (default, every 48 pixels). Needs to be a multiple of 12 pixels to avoid awful rounding.
+    let totaltimesec = elapsedtime / 60;
+    let xaxisctr = 0; // Position in time per label
+    while (xaxisctr < totaltimesec) {
+        // Tick on line
+        svg = svg ~ "<path d=\"M " ~ ToString(64 + xaxisctr * GRAPH_SCALE) ~ " 300 V 308\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
+        // Text Label
+        svg = svg ~ "<text x=\"" ~ ToString(64 + xaxisctr * GRAPH_SCALE) ~ "\" y=\"316\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"middle\" dominant-baseline=\"central\">";
+        let min = truncate(xaxisctr/60);
+        let sec = truncate(xaxisctr) % 60;
+        svg = svg ~ IntToString(min) ~ "m" ~ IntToString(sec) ~ "s";
+        svg = svg ~ "</text>";
+        xaxisctr += 48 / GRAPH_SCALE;
+    }
+    return svg;
+}
+
+/* *************************************************************************
+* CSVtoArray() -- Takes a newline and comma delimited file and converts it to an array.
+* Param: filepath (string) - File handle of modified CSV file
+* Return: array of string values
+************************************************************************* */
+function CSVtoArray(filepath) {
+    let handle = ObjFile_Create(OBJ_FILE_TEXT);
+    ObjFile_Open(handle, filepath);
+
+    let toreturn = [];
+    ascent(i in 0..ObjFileT_GetLineCount(handle)) { // For every line
+        let line = ObjFileT_GetLineText(handle, i + 1); // Recall that lines are 1-indexed
+        let split = SplitString(line, ",");
+        ascent(j in 0..length(split)) {
+            toreturn = toreturn ~ TrimString(split[i]);
+        }
+    }
+    return toreturn;
 }
 
 function GenerateReport() {
@@ -117,6 +176,11 @@ function GenerateReport() {
     ObjFileT_AddLine(outputfile, openingheaderhtml);
 
     // --------------- Start Reporting ---------------
+
+    if (FEATURE_FPS_ENABLE) {
+        ObjFileT_AddLine(outputfile, "<h3 class=\"header\">FPS Monitoring</h3><p>Note: FPS values recorded here may be lower than usual due to the overhead caused by the APM.</p>");
+        ObjFileT_AddLine(outputfile, APM_ChartGenFPS);
+    }
 
     // ---------------  End Reporting  ---------------
 
