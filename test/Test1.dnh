@@ -1,0 +1,92 @@
+#TouhouDanmakufu[Single]
+#Title["Test 1"]
+#Text["Testing for APM"]
+#ScriptVersion[3]
+
+let objBoss;
+let objScene=GetEnemyBossSceneObjectID();
+
+let count = 0;
+
+@Loading {
+    let apm = LoadScript(GetCurrentScriptDirectory() ~ "./../SparenDNHAPM.dnh");
+    SetAreaCommonData("dnhapm", "FinalizeEvent", EV_USER_STAGE + 2000);
+    SetAreaCommonData("dnhapm", "OutputDirectory", GetCurrentScriptDirectory() ~ "./dnhapm-output/");
+    SetAreaCommonData("dnhapm", "ScriptName", "TEST 1");
+    StartScript(apm);
+}
+
+@Initialize {
+    objBoss = ObjEnemy_Create(OBJ_ENEMY_BOSS);
+    ObjEnemy_Regist(objBoss);
+    ObjEnemy_SetDamageRate(objBoss, 80, 50);
+    ObjMove_SetDestAtFrame(objBoss, 192, 224-60, 60); 
+    SetShotAutoDeleteClip(32,32,32,32);
+    TFinalize;
+}
+
+@Event{
+    alternative(GetEventType())
+    case(EV_REQUEST_LIFE){SetScriptResult(1000);}//Usually 3000 for spells, 2500 for nonspells
+    case(EV_REQUEST_TIMER){SetScriptResult(60);}
+}
+
+@MainLoop {
+    ObjEnemy_SetIntersectionCircleToShot(objBoss, ObjMove_GetX(objBoss), ObjMove_GetY(objBoss), 32); 
+    ObjEnemy_SetIntersectionCircleToPlayer(objBoss, ObjMove_GetX(objBoss), ObjMove_GetY(objBoss), 24);
+
+    if(count > 0 && count % 360 == 0){
+        //ObjMove_SetDestAtFrame(objBoss, rand(GetCenterX+90,GetCenterX-90), rand(GetCenterY-60,GetCenterY-120), 60);
+    }
+
+    if(count % 360 == 0 && count >= 0){taskA;}
+    
+    count++;
+    yield;
+}
+
+task taskA{
+    if(ObjEnemy_GetInfo(objBoss, INFO_LIFE) <= 0){return;}//Default kill to prevent (0,0) spawning
+    let angleT = rand(0,360);
+    loop(6){ //Number of times it shoots
+        if(ObjEnemy_GetInfo(objBoss, INFO_LIFE) <= 0){return;}//Default kill to prevent (0,0) spawning
+        loop(6){ //Number of arrows in the loop.
+            ascent(i in 0..4){
+                CreateShotA1(ObjMove_GetX(objBoss), ObjMove_GetY(objBoss), 3-i*0.25, angleT+i*4, 5, 0);
+            }
+            descent(i in 0..4){
+                CreateShotA1(ObjMove_GetX(objBoss), ObjMove_GetY(objBoss), 3-i*0.25, angleT-i*4, 5, 0);
+            }
+            angleT+=360/6;
+        }
+        loop(15){yield;}
+        angleT += 360/5;
+    }
+}
+
+task TFinalize {
+    while(ObjEnemy_GetInfo(objBoss,INFO_LIFE)>0){yield;}
+    NotifyEventAll(EV_USER_STAGE + 2000, "");
+    loop(12){yield;}
+    DeleteShotAll(TYPE_ALL, TYPE_ITEM); //All shots become point items
+    Obj_Delete(objBoss);
+    DeleteShotAll(TYPE_ALL,TYPE_IMMEDIATE);
+    let arr = GetShotIdInCircleA2(GetCenterX,GetCenterY,1000,TARGET_ENEMY);
+    ascent(i in 0..length(arr)){Obj_Delete(arr[i]);}
+    SetAutoDeleteObject(true);
+    Reset2DCamera;//Because of screen shaking and spell background being misplaced
+    CloseScript(GetOwnScriptID());
+    return;
+}
+
+function GetCenterX() {
+    return 192;
+}
+
+function GetCenterY() {
+    return 224;
+}
+
+function wait(n) {
+    loop(n) {yield;}
+}
