@@ -76,21 +76,21 @@ task APM_StartFPS {
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
     let outputfilepath = OUTPUT_DIRECTORY ~ "apmfps-" ~ starttime ~ ".csv";
     ObjFile_OpenNW(outputfile, outputfilepath);
-    let log = ""; // CSV log
+    let csvlog = ""; // CSV log
     let counter = 0;
     while(!finished) {
         let cfps = GetCurrentFps();
-        log = log ~ vtos("1.2f", cfps) ~ ",";
-        // If log is getting too long, push it to the File Object
+        csvlog = csvlog ~ vtos("1.2f", cfps) ~ ",";
+        // If csvlog is getting too long, push it to the File Object
         if (counter % 128 == 0) {
-            ObjFileT_AddLine(outputfile, log);
-            log = "";
+            ObjFileT_AddLine(outputfile, csvlog);
+            csvlog = "";
         }
         counter += 1;
         loop(FEATURE_FPS_UPDATEFREQ){yield;}
     }
     // Flush to file
-    ObjFileT_AddLine(outputfile, log);
+    ObjFileT_AddLine(outputfile, csvlog);
     ObjFile_Store(outputfile);
     WriteLog("APM_StartFPS: Wrote CSV to " ~ outputfilepath);
     Obj_Delete(outputfile);
@@ -143,9 +143,9 @@ function SVGChartGen {
         svg = svg ~ "<path d=\"M " ~ ToString(64 + xaxisctr * GRAPH_SCALE) ~ " 300 V 308\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
         // Text Label
         svg = svg ~ "<text x=\"" ~ ToString(64 + xaxisctr * GRAPH_SCALE) ~ "\" y=\"316\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"middle\" dominant-baseline=\"central\">";
-        let min = truncate(xaxisctr/60);
-        let sec = truncate(xaxisctr) % 60;
-        svg = svg ~ IntToString(min) ~ "m" ~ IntToString(sec) ~ "s";
+        let minutes = truncate(xaxisctr/60);
+        let seconds = truncate(xaxisctr) % 60;
+        svg = svg ~ IntToString(minutes) ~ "m" ~ IntToString(seconds) ~ "s";
         svg = svg ~ "</text>";
         xaxisctr += 48 / GRAPH_SCALE;
     }
@@ -237,7 +237,7 @@ function maxarr(arr) {
     let maxval = arr[0];
     ascent(i in 0..length(arr)) {
         if (arr[i] >= maxval) {
-            max = arr[i];
+            maxval = arr[i];
         }
     }
     return maxval;
