@@ -97,10 +97,12 @@ task APM_StartFPS {
     // yield once before marking as complete
     yield;
     finished_fps = true;
+    WriteLog("APM_StartFPSDEBUG: Finished");
 }
 
 // Returns the SVG chart for FPS in its entirety.
 function APM_ChartGenFPS {
+    WriteLog("APM_ChartGenFPS: Starting.");
     let svg = SVGChartGen;
     let paths = [];
     // Parse files 
@@ -111,7 +113,6 @@ function APM_ChartGenFPS {
     // Otherwise just use this CSV.
     let datapoints = CSVtoArray(filepath);
     maxfps = maxarr(datapoints);
-    WriteLog("APM_ChartGenFPS: Maximum FPS is " ~ ToString(maxfps));
     // Add y axis labels. Note: 304 pixels worth of height to play with. We will want exactly 10 labels.
     ascent(i in 0..10) {
         // Tick on line
@@ -166,6 +167,7 @@ function CSVtoArray(filepath) {
     while (!status) {
         //WriteLog("CSVtoArray: Reading file " ~ filepath ~ " failed.");
         status = ObjFile_Open(handle, filepath);
+        yield;
     }
     WriteLog("CSVtoArray: Successfully read file " ~ filepath ~ ".");
 
@@ -174,7 +176,9 @@ function CSVtoArray(filepath) {
         let line = ObjFileT_GetLineText(handle, i + 1); // Recall that lines are 1-indexed
         let split = SplitString(line, ",");
         ascent(j in 0..length(split)) {
-            toreturn = toreturn ~ TrimString(split[i]);
+            if (split[j] != "") {
+                toreturn = toreturn ~ [ator(split[j])];
+            }
         }
     }
     Obj_Delete(handle);
