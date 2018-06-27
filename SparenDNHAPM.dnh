@@ -1,0 +1,89 @@
+/* ******************************************************************
+* Sparen's Danmakufu ph3 Application Monitoring System
+* For use with Touhou Danmakufu ph3
+* (C) Sparen of Iria 2018
+****************************************************************** */
+
+/* ******************************************************************
+* This script is meant to be run in parallel with a stage script or 
+* lower. Set up this system in @Loading of your preferred script
+* using LoadScript(), SetCommonData(), and StartScript().
+****************************************************************** */
+
+// Global Variables used regardless of which tracking mechanisms are enabled
+let currdir = GetCurrentScriptDirectory();
+let starttime = GetCurrentDateTimeS(); // Log start time for use in output report
+let player = GetPlayerID(); // Player #ID, used in output report
+
+// Variables to be updated
+let elapsedtime = 0;
+
+// Variables to be customized
+let EVENT_DNHAPM_FINALIZE; // Event to call via NotifyEvent/NotifyEventAll when the user wishes to generate the output report.
+let OUTPUT_DIRECTORY; // Directory to output the report to
+let SCRIPT_NAME; // Name of the script being monitored
+
+@Loading {
+    if (!IsCommonDataAreaExists("dnhapm")) {
+        CreateCommonDataArea("dnhapm");
+    }
+}
+
+@Initialize {
+    WriteLog("DNHAPM: Now running");
+    // Load customizable variables
+    EVENT_DNHAPM_FINALIZE = GetAreaCommonData("dnhapm", "FinalizeEvent", EV_USER_STAGE + 2048);
+    OUTPUT_DIRECTORY = GetAreaCommonData("dnhapm", "OutputDirectory", currdir ~ "./dnhapm-output/");
+    SCRIPT_NAME = GetAreaCommonData("dnhapm", "ScriptName", "--Unnamed Script--");
+}
+
+// We must catch all notable events.
+@Event {
+    alternative(GetEventType())
+    case(EVENT_DNHAPM_FINALIZE) {
+        GenerateReport;
+    }
+}
+
+@MainLoop {
+    elapsedtime += 1; // update counter
+    yield;
+}
+
+function GenerateReport() {
+    // Begin by creating our output HTML file.
+    WriteLog("DNHAPM: Will write to " ~ OUTPUT_DIRECTORY ~ player ~ starttime ~ ".html");
+    let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
+    ObjFile_OpenNW(outputfile, OUTPUT_DIRECTORY ~ player ~ starttime ~ ".html");
+
+    // First, write our headers
+    let headerhtml = "<!DOCTYPE html><html lang=\"en-us\"><meta charset=\utf-8\"><title>Danmakufu APM for " ~ SCRIPT_NAME ~ "</title>";
+    ObjFileT_AddLine(outputfile, headerhtml);
+
+    // Second, add CSS
+    let csshtml = "<style>body {font-family: \"Helvetica\";} .header {padding: 4px; background-color: #4466DD; color: white; border-left: 8px solid #88DDFF;}</style>";
+    ObjFileT_AddLine(outputfile, csshtml);
+
+    // Begin body
+    let bodystarthtml = "<body>";
+    ObjFileT_AddLine(outputfile, bodystarthtml);
+
+    // Write Opening Header
+    let openingheaderhtml = "<h1 class=\"header\">Danmakufu APM for script: " ~ SCRIPT_NAME ~ "</h1>" ~
+        "<div><p>Start Time: " ~ starttime[0..4] ~ " " ~ starttime[4..6] ~ " " ~ starttime[6..8] ~ " " ~ starttime[8..10] ~ ":" ~ starttime[10..12] ~ ":" ~ starttime[12..14] ~ "</p><p>Player ID: " ~ player ~ "</p></div>";
+    ObjFileT_AddLine(outputfile, openingheaderhtml);
+
+    // --------------- Start Reporting ---------------
+
+    // ---------------  End Reporting  ---------------
+
+    // End Body
+    let bodyendhtml = "<body>";
+    ObjFileT_AddLine(outputfile, bodyendhtml);
+
+    // End by closing the HTML and writing our output HTML file.
+    let endhtml = "</html>";
+    ObjFileT_AddLine(outputfile, endhtml);
+    ObjFile_Store(outputfile);
+}
+
