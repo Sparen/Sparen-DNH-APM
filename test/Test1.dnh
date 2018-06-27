@@ -28,7 +28,7 @@ let count = 0;
 @Event{
     alternative(GetEventType())
     case(EV_REQUEST_LIFE){SetScriptResult(1000);}//Usually 3000 for spells, 2500 for nonspells
-    case(EV_REQUEST_TIMER){SetScriptResult(60);}
+    case(EV_REQUEST_TIMER){SetScriptResult(360);}
 }
 
 @MainLoop {
@@ -36,7 +36,7 @@ let count = 0;
     ObjEnemy_SetIntersectionCircleToPlayer(objBoss, ObjMove_GetX(objBoss), ObjMove_GetY(objBoss), 24);
 
     if(count > 0 && count % 360 == 0){
-        //ObjMove_SetDestAtFrame(objBoss, rand(GetCenterX+90,GetCenterX-90), rand(GetCenterY-60,GetCenterY-120), 60);
+        ObjMove_SetDestAtFrame(objBoss, rand(GetCenterX+90,GetCenterX-90), rand(GetCenterY-60,GetCenterY-120), 60);
     }
 
     if(count % 360 == 0 && count >= 0){taskA;}
