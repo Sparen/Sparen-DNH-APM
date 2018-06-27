@@ -99,6 +99,7 @@ task APM_StartFPS {
     finished_fps = true;
 }
 
+// Returns the SVG chart for FPS in its entirety.
 function APM_ChartGenFPS {
     let svg = SVGChartGen;
     let paths = [];
@@ -110,12 +111,13 @@ function APM_ChartGenFPS {
     // Otherwise just use this CSV.
     let datapoints = CSVtoArray(filepath);
     maxfps = maxarr(datapoints);
+    WriteLog("APM_ChartGenFPS: Maximum FPS is " ~ ToString(maxfps));
     // Add y axis labels. Note: 304 pixels worth of height to play with. We will want exactly 10 labels.
     ascent(i in 0..10) {
         // Tick on line
-        svg = svg ~ "<path d=\"M 60 " ~ ToString(304 - maxfps/9 * i) ~ " H 68\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
+        svg = svg ~ "<path d=\"M 60 " ~ ToString(304 - 300 * i/9) ~ " H 68\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
         // Text Label
-        svg = svg ~ "<text x=\"54\" y=\"" ~ ToString(304 - maxfps/9 * i) ~ "\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"end\" dominant-baseline=\"central\">";
+        svg = svg ~ "<text x=\"54\" y=\"" ~ ToString(304 - 300 * i/9) ~ "\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"end\" dominant-baseline=\"central\">";
         svg = svg ~ vtos("1.2f", maxfps/9 * i) ~ "FPS";
         svg = svg ~ "</text>";
     }
@@ -175,6 +177,7 @@ function CSVtoArray(filepath) {
             toreturn = toreturn ~ TrimString(split[i]);
         }
     }
+    Obj_Delete(handle);
     return toreturn;
 }
 
@@ -240,5 +243,5 @@ function maxarr(arr) {
             maxval = arr[i];
         }
     }
-    return maxval;
+    return ator(maxval);
 }
