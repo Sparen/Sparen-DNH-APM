@@ -18,6 +18,7 @@ let player = GetPlayerID(); // Player #ID, used in output report
 // Variables to be updated
 let elapsedtime = 0;
 let finished = false;
+let finished_fps = false;
 
 // Variables to be customized
 let EVENT_DNHAPM_FINALIZE; // Event to call via NotifyEvent/NotifyEventAll when the user wishes to generate the output report.
@@ -73,8 +74,8 @@ let FEATURE_FPS_LINECOLOR; // Color of the line, in HTML supported color
 task APM_StartFPS {
     // Create output file
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
-    ObjFile_OpenNW(outputfile, OUTPUT_DIRECTORY ~ "apmfps-" ~ player ~ starttime ~ ".csv");
-
+    let outputfilepath = OUTPUT_DIRECTORY ~ "apmfps-" ~ starttime ~ ".csv";
+    ObjFile_OpenNW(outputfile, outputfilepath);
     let log = ""; // CSV log
     let counter = 0;
     while(!finished) {
@@ -91,11 +92,33 @@ task APM_StartFPS {
     // Flush to file
     ObjFileT_AddLine(outputfile, log);
     ObjFile_Store(outputfile);
+    WriteLog("APM_StartFPS: Wrote CSV to " ~ outputfilepath);
+    Obj_Delete(outputfile);
+    // yield once before marking as complete
+    yield;
+    finished_fps = true;
 }
 
 function APM_ChartGenFPS {
     let svg = SVGChartGen;
-    // Add y axis labels
+    let paths = [];
+    // Parse files 
+    let maxfps = 0;
+    let filepath = OUTPUT_DIRECTORY ~ "apmfps-" ~ starttime ~ ".csv"; // Current run
+    // If we are using Aggregate, then we iterate over all files in directory with "apmfps-" at start of name.
+    //TODO
+    // Otherwise just use this CSV.
+    let datapoints = CSVtoArray(filepath);
+    maxfps = maxarr(datapoints);
+    // Add y axis labels. Note: 304 pixels worth of height to play with. We will want exactly 10 labels.
+    ascent(i in 0..10) {
+        // Tick on line
+        svg = svg ~ "<path d=\"M 60 " ~ ToString(304 - maxfps/9 * i) ~ " H 68\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
+        // Text Label
+        svg = svg ~ "<text x=\"54\" y=\"" ~ ToString(304 - maxfps/9 * i) ~ "\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"end\" dominant-baseline=\"central\">";
+        svg = svg ~ vtos("1.2f", maxfps/9 * i) ~ "FPS";
+        svg = svg ~ "</text>";
+    }
 
     // Add paths
 
@@ -106,7 +129,7 @@ function APM_ChartGenFPS {
 
 /* ---------------- Report Generation ---------------- */
 
-// Returns the SVG chart with everything except for paths and y axis labels.
+// Returns the SVG chart with everything except for paths and y axis labels. Helper function.
 function SVGChartGen {
     let svg_width = elapsedtime * GRAPH_SCALE / 60 + 96; // By default, a second is one pixel. 64 pixel buffer for left sidebar, 32 for right sidebar
     let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" ~ ToString(svg_width) ~ "\" height=\"400\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">";
@@ -135,8 +158,14 @@ function SVGChartGen {
 * Return: array of string values
 ************************************************************************* */
 function CSVtoArray(filepath) {
+    WriteLog("CSVtoArray: Running on " ~ filepath);
     let handle = ObjFile_Create(OBJ_FILE_TEXT);
-    ObjFile_Open(handle, filepath);
+    let status = ObjFile_Open(handle, filepath);
+    while (!status) {
+        //WriteLog("CSVtoArray: Reading file " ~ filepath ~ " failed.");
+        status = ObjFile_Open(handle, filepath);
+    }
+    WriteLog("CSVtoArray: Successfully read file " ~ filepath ~ ".");
 
     let toreturn = [];
     ascent(i in 0..ObjFileT_GetLineCount(handle)) { // For every line
@@ -154,9 +183,10 @@ function GenerateReport() {
     yield; //Wait for all tasks fo terminate and flush
 
     // Begin by creating our output HTML file.
-    WriteLog("DNHAPM: Will write to " ~ OUTPUT_DIRECTORY ~ player ~ starttime ~ ".html");
+    let outputfilepath = OUTPUT_DIRECTORY ~ player ~ starttime ~ ".html";
+    WriteLog("GenerateReport: Will write to " ~ outputfilepath);
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
-    ObjFile_OpenNW(outputfile, OUTPUT_DIRECTORY ~ player ~ starttime ~ ".html");
+    ObjFile_OpenNW(outputfile, outputfilepath);
 
     // First, write our headers
     let headerhtml = "<!DOCTYPE html><html lang=\"en-us\"><meta charset=\utf-8\"><title>Danmakufu APM for " ~ SCRIPT_NAME ~ "</title>";
@@ -178,6 +208,7 @@ function GenerateReport() {
     // --------------- Start Reporting ---------------
 
     if (FEATURE_FPS_ENABLE) {
+        while (!finished_fps) {yield;} //Wait for file to be written before reading
         ObjFileT_AddLine(outputfile, "<h3 class=\"header\">FPS Monitoring</h3><p>Note: FPS values recorded here may be lower than usual due to the overhead caused by the APM.</p>");
         ObjFileT_AddLine(outputfile, APM_ChartGenFPS);
     }
@@ -192,5 +223,22 @@ function GenerateReport() {
     let endhtml = "</html>";
     ObjFileT_AddLine(outputfile, endhtml);
     ObjFile_Store(outputfile);
+    yield;
+    Obj_Delete(outputfile);
 }
 
+// Returns max value in array. Assumes string inputs.
+// Thankfully DNH allows us to compare strings like so: "3.0" < "2.4"
+function maxarr(arr) {
+    if (length(arr) == 0) {
+        WriteLog("maxarr: Received empty array");
+        return -1;
+    }
+    let maxval = arr[0];
+    ascent(i in 0..length(arr)) {
+        if (arr[i] >= maxval) {
+            max = arr[i];
+        }
+    }
+    return maxval;
+}
