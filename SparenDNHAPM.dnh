@@ -19,6 +19,7 @@ let player = GetPlayerID(); // Player #ID, used in output report
 let elapsedtime = 0;
 let finished = false;
 let finished_fps = false;
+let finished_graze = false;
 
 // Variables to be customized
 let EVENT_DNHAPM_FINALIZE; // Event to call via NotifyEvent/NotifyEventAll when the user wishes to generate the output report.
@@ -34,6 +35,10 @@ let USER_TEXT; // User defined text
 let FEATURE_FPS_ENABLE; // Enable or disable FPS logging
 let FEATURE_FPS_UPDATEFREQ; // Update frequency, in frames.
 let FEATURE_FPS_LINECOLOR; // Color of the line, in HTML supported color
+
+let FEATURE_GRAZE_ENABLE; // Enable or disable FPS logging
+let FEATURE_GRAZE_UPDATEFREQ; // Update frequency, in frames.
+let FEATURE_GRAZE_LINECOLOR; // Color of the line, in HTML supported color
 
 @Loading {
     if (!IsCommonDataAreaExists("dnhapm")) {
@@ -57,9 +62,16 @@ let FEATURE_FPS_LINECOLOR; // Color of the line, in HTML supported color
     FEATURE_FPS_UPDATEFREQ = GetAreaCommonData("dnhapm", "FPSUpdateFreq", 10);
     FEATURE_FPS_LINECOLOR = GetAreaCommonData("dnhapm", "FPSLineColor", "#2266FF");
 
+    FEATURE_GRAZE_ENABLE = GetAreaCommonData("dnhapm", "GrazeEnable", true);
+    FEATURE_GRAZE_UPDATEFREQ = GetAreaCommonData("dnhapm", "GrazeUpdateFreq", 10);
+    FEATURE_GRAZE_LINECOLOR = GetAreaCommonData("dnhapm", "GrazeLineColor", "#887777");
+
     //Initialize non-event based trackers
     if (FEATURE_FPS_ENABLE) {
         APM_StartFPS;
+    }
+    if (FEATURE_GRAZE_ENABLE) {
+        APM_StartGraze;
     }
 }
 
@@ -160,6 +172,93 @@ function APM_ChartGenFPS {
     svg = svg ~ "</svg>";
     svg = svg ~ "<p>Logged a maximum of " ~ IntToString(maxtime) ~ " data points spanning " ~ ToString(maxtime * FEATURE_FPS_UPDATEFREQ/60) ~ " seconds.</p>";
     svg = svg ~ "<p>Logged a maximum FPS of " ~ vtos("1.2f", maxfps) ~ ".</p>";  
+    return svg;
+}
+
+/* =============================================================================== */
+/* ================================ Graze Logging ================================ */
+/* =============================================================================== */
+task APM_StartGraze {
+    // Create output file
+    let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
+    let outputfilepath = OUTPUT_DIRECTORY ~ "apmgraze-" ~ starttime ~ ".csv";
+    ObjFile_OpenNW(outputfile, outputfilepath);
+    let csvlog = ""; // CSV log
+    let counter = 0;
+    while(!finished) {
+        let cfps = GetGraze();
+        csvlog = csvlog ~ vtos("1.2f", cfps) ~ ",";
+        // If csvlog is getting too long, push it to the File Object
+        if (counter % 128 == 0) {
+            ObjFileT_AddLine(outputfile, csvlog);
+            csvlog = "";
+        }
+        counter += 1;
+        loop(FEATURE_GRAZE_UPDATEFREQ){yield;}
+    }
+    // Flush to file
+    ObjFileT_AddLine(outputfile, csvlog);
+    ObjFile_Store(outputfile);
+    WriteLog("APM_StartGraze: Wrote CSV to " ~ outputfilepath);
+    Obj_Delete(outputfile);
+    // yield once before marking as complete
+    yield;
+    finished_graze = true;
+    WriteLog("APM_StartGraze: Finished");
+}
+
+// Returns the SVG chart for Graze in its entirety.
+function APM_ChartGenGraze {
+    WriteLog("APM_ChartGenGraze: Starting.");
+    let paths = [];
+    // First, we will determine the scale of the x and y axes and log all of the necessary files.
+    let maxgraze = 0; // Maximum Graze 
+    let maxtime = 0; // Number of DATA POINTS collected - will be scaled later
+    let currfilepath = OUTPUT_DIRECTORY ~ "apmgraze-" ~ starttime ~ ".csv"; // Current run, for later reference
+    let filepathlist = GetFilePathList(OUTPUT_DIRECTORY);
+    ascent(i in 0..length(filepathlist)) {
+        // First, retrieve the file name
+        let filename = parseFileName(filepathlist[i]);
+        //WriteLog("APM_ChartGenGraze DEBUG: testing on " ~ filename);
+        // We only read the file if aggregating and a graze file, or if it's the file we just set up.
+        if (filename[0..8] == "apmgraze" && ENABLE_AGGREGATE || (filename == currfilepath)) {
+            //WriteLog("APM_ChartGenGraze DEBUG: running on " ~ filename);
+            // See if this one sets a new maxgraze
+            let filedatapoints = CSVtoArray(filepathlist[i]);
+            let filemaxgraze = maxarr(filedatapoints);
+            if (filemaxgraze > maxgraze) {maxgraze = filemaxgraze;}
+            // See if this one sets a new maxtime
+            if (length(filedatapoints) > maxtime) {maxtime = length(filedatapoints);}
+            // Generate path. If filepathlist[i] is the current file, then opacity is set to 1, AGGREGATE_LINE_OPACITY otherwise.
+            let opacity = 1;
+            if (filepathlist[i] != currfilepath) {opacity = AGGREGATE_LINE_OPACITY;}
+            let newpath = "<path d=\"M 64 304 ";
+            // Iterate over the data points. Recall that by default, a second is one pixel.
+            // Also recall that each data point is FEATURE_FPS_UPDATEFREQ frames apart.
+            let basex = 64;
+            ascent(j in 0..length(filedatapoints)) {
+                let nodex = basex + j * FEATURE_GRAZE_UPDATEFREQ/60 * GRAPH_SCALE;
+                let nodey = 304 - 300 * ator(filedatapoints[j])/maxgraze;
+                newpath = newpath ~ "L " ~ ToString(nodex) ~ " " ~ ToString(nodey) ~ " ";
+            }
+            newpath = newpath ~ "\" stroke=\"" ~ FEATURE_GRAZE_LINECOLOR ~ "\" stroke-width=\"1\" fill=\"none\" opacity=\"" ~ ToString(opacity) ~ "\"></path>";
+            paths = paths ~ [newpath];
+        }
+    }
+    // Chart Basics 
+    let svg = SVGChartGen(maxtime * FEATURE_GRAZE_UPDATEFREQ/60);
+    // X Axis Labels
+    svg = svg ~ SVGXAxisGen(maxtime * FEATURE_GRAZE_UPDATEFREQ/60);
+    // Y Axis Labels
+    svg = svg ~ SVGYAxisGen(maxgraze, "");
+    // Add paths
+    ascent(i in 0..length(paths)) {
+        svg = svg ~ paths[i];
+    }
+    // Close SVG
+    svg = svg ~ "</svg>";
+    svg = svg ~ "<p>Logged a maximum of " ~ IntToString(maxtime) ~ " data points spanning " ~ ToString(maxtime * FEATURE_GRAZE_UPDATEFREQ/60) ~ " seconds.</p>";
+    svg = svg ~ "<p>Logged a maximum Graze of " ~ IntToString(maxgraze) ~ ".</p>";  
     return svg;
 }
 
@@ -278,6 +377,12 @@ task GenerateReport() {
         while (!finished_fps) {yield;} //Wait for file to be written before reading
         ObjFileT_AddLine(outputfile, "<h3 class=\"header\">FPS Monitoring</h3><p>Note: FPS values recorded here may be lower than usual due to the overhead caused by the APM.</p>");
         ObjFileT_AddLine(outputfile, APM_ChartGenFPS);
+    }
+
+    if (FEATURE_GRAZE_ENABLE) {
+        while (!finished_graze) {yield;} //Wait for file to be written before reading
+        ObjFileT_AddLine(outputfile, "<h3 class=\"header\">Graze Monitoring</h3>");
+        ObjFileT_AddLine(outputfile, APM_ChartGenGraze);
     }
 
     // ---------------  End Reporting  ---------------
