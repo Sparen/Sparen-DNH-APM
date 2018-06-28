@@ -57,6 +57,19 @@ For FPS Monitoring, there are three fields - one for enabling the feature, one f
 
 For FPS Monitoring, note that Danmakufu internally updates FPS infrequently, so even with an update frequency of every 10 frames, you will get very straight lines.
 
+### Current and Planned Features
+
+Current:
+* FPS Monitoring  
+
+Planned:
+* Graze Monitoring  
+* Score Minitoring  
+* Death and Bomb Monitoring  
+* Item Monitoring (requires proper integrations)  
+* Spellcard graph overlay (may only be usable on non-aggregate setups)  
+* Combined graphs (stretch goal)  
+
 ### Downloads
 
 This project is currently under construction and is not yet recommended for use. 
