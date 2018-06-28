@@ -328,7 +328,7 @@ function APM_ChartGenGraze {
 // Takes the amount of time to display on the graph in seconds.
 function SVGChartGen(time) {
     let svg_width = time * GRAPH_SCALE + 128; // By default, a second is one pixel. 64 pixel buffer for left sidebar, 64 for right sidebar
-    let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" ~ ToString(svg_width) ~ "\" height=\"" ~ IntToString(320 + 12 * USER_NOTE_SLOTS) ~ "\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">";
+    let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" ~ ToString(svg_width) ~ "\" height=\"" ~ IntToString(328 + 12 * USER_NOTE_SLOTS) ~ "\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">";
     svg = svg ~ "<path d=\"M 64 304 H " ~ ToString(svg_width) ~ "\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
     svg = svg ~ "<path d=\"M 64 304 V 0\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
     return svg;
