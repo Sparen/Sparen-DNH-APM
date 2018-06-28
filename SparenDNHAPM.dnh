@@ -26,6 +26,7 @@ let OUTPUT_DIRECTORY; // Directory to output the report to
 let SCRIPT_NAME; // Name of the script being monitored
 let ENABLE_AGGREGATE; // Whether or not to aggregate all data in directory when making graphs
 let GRAPH_SCALE; // Scale of the x axis on the graph. To be implemented later.
+let AGGREGATE_LINE_OPACITY; // Opacity of the paths representing former data points.
 
 // Feature Set Customization
 let FEATURE_FPS_ENABLE; // Enable or disable FPS logging
@@ -46,6 +47,7 @@ let FEATURE_FPS_LINECOLOR; // Color of the line, in HTML supported color
     SCRIPT_NAME = GetAreaCommonData("dnhapm", "ScriptName", "--Unnamed Script--");
     ENABLE_AGGREGATE = GetAreaCommonData("dnhapm", "EnableAggregate", true);
     GRAPH_SCALE = GetAreaCommonData("dnhapm", "GraphScale", 1);
+    AGGREGATE_LINE_OPACITY = GetAreaCommonData("dnhapm", "AggregateLineOpacity", 0.25);
 
     FEATURE_FPS_ENABLE = GetAreaCommonData("dnhapm", "FPSEnable", true);
     FEATURE_FPS_UPDATEFREQ = GetAreaCommonData("dnhapm", "FPSUpdateFreq", 10);
@@ -105,28 +107,51 @@ task APM_StartFPS {
 // Returns the SVG chart for FPS in its entirety.
 function APM_ChartGenFPS {
     WriteLog("APM_ChartGenFPS: Starting.");
-    let svg = SVGChartGen;
     let paths = [];
-    // Parse files 
-    let maxfps = 0;
-    let filepath = OUTPUT_DIRECTORY ~ "apmfps-" ~ starttime ~ ".csv"; // Current run
-    // If we are using Aggregate, then we iterate over all files in directory with "apmfps-" at start of name.
-    //TODO
-    // Otherwise just use this CSV.
-    let datapoints = CSVtoArray(filepath);
-    maxfps = maxarr(datapoints);
-    // Add y axis labels. Note: 304 pixels worth of height to play with. We will want exactly 10 labels.
-    ascent(i in 0..10) {
-        // Tick on line
-        svg = svg ~ "<path d=\"M 60 " ~ ToString(304 - 300 * i/9) ~ " H 68\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
-        // Text Label
-        svg = svg ~ "<text x=\"54\" y=\"" ~ ToString(304 - 300 * i/9) ~ "\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"end\" dominant-baseline=\"central\">";
-        svg = svg ~ vtos("1.2f", maxfps/9 * i) ~ "FPS";
-        svg = svg ~ "</text>";
+    // First, we will determine the scale of the x and y axes and log all of the necessary files.
+    let maxfps = 0; // Maximum FPS 
+    let maxtime = 0; // Number of DATA POINTS collected - will be scaled later
+    let currfilepath = OUTPUT_DIRECTORY ~ "apmfps-" ~ starttime ~ ".csv"; // Current run, for later reference
+    let filepathlist = GetFilePathList(OUTPUT_DIRECTORY);
+    ascent(i in 0..length(filepathlist)) {
+        // First, retrieve the file name
+        let filename = parseFileName(filepathlist[i]);
+        //WriteLog("APM_ChartGenFPS DEBUG: testing on " ~ filename);
+        // We only read the file if aggregating and a fps file, or if it's the file we just set up.
+        if (filename[0..6] == "apmfps" && ENABLE_AGGREGATE || (filename == currfilepath)) {
+            //WriteLog("APM_ChartGenFPS DEBUG: running on " ~ filename);
+            // See if this one sets a new maxfps
+            let filedatapoints = CSVtoArray(filepathlist[i]);
+            let filemaxfps = maxarr(filedatapoints);
+            if (filemaxfps > maxfps) {maxfps = filemaxfps;}
+            // See if this one sets a new maxtime
+            if (length(filedatapoints) > maxtime) {maxtime = length(filedatapoints);}
+            // Generate path. If filepathlist[i] is the current file, then opacity is set to 1, AGGREGATE_LINE_OPACITY otherwise.
+            let opacity = 1;
+            if (filepathlist[i] != currfilepath) {opacity = AGGREGATE_LINE_OPACITY;}
+            let newpath = "<path d=\"M 64 304 ";
+            // Iterate over the data points. Recall that by default, a second is one pixel.
+            // Also recall that each data point is FEATURE_FPS_UPDATEFREQ frames apart.
+            let basex = 64;
+            ascent(j in 0..length(filedatapoints)) {
+                let nodex = basex + j * FEATURE_FPS_UPDATEFREQ/60 * GRAPH_SCALE;
+                let nodey = 304 - 300 * ator(filedatapoints[j])/maxfps;
+                newpath = newpath ~ "L " ~ ToString(nodex) ~ " " ~ ToString(nodey) ~ " ";
+            }
+            newpath = newpath ~ "\" stroke=\"" ~ FEATURE_FPS_LINECOLOR ~ "\" stroke-width=\"1\" fill=\"none\" opacity=\"" ~ ToString(opacity) ~ "\"></path>";
+            paths = paths ~ [newpath];
+        }
     }
-
+    // Chart Basics 
+    let svg = SVGChartGen(maxtime * 60/FEATURE_FPS_UPDATEFREQ);
+    // X Axis Labels
+    svg = svg ~ SVGXAxisGen(maxtime * 60/FEATURE_FPS_UPDATEFREQ);
+    // Y Axis Labels
+    svg = svg ~ SVGYAxisGen(maxfps, "FPS");
     // Add paths
-
+    ascent(i in 0..length(paths)) {
+        svg = svg ~ paths[i];
+    }
     // Close SVG
     svg = svg ~ "</svg>";
     return svg;
@@ -136,14 +161,22 @@ function APM_ChartGenFPS {
 /* ================================ Report Generation ================================ */
 /* =================================================================================== */
 
-// Returns the SVG chart with everything except for paths and y axis labels. Helper function.
-function SVGChartGen {
-    let svg_width = elapsedtime * GRAPH_SCALE / 60 + 96; // By default, a second is one pixel. 64 pixel buffer for left sidebar, 32 for right sidebar
+// Returns the SVG chart header. Helper function.
+// Takes the amount of time to display on the graph in frames.
+function SVGChartGen(time) {
+    let svg_width = time * GRAPH_SCALE / 60 + 128; // By default, a second is one pixel. 64 pixel buffer for left sidebar, 64 for right sidebar
     let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" ~ ToString(svg_width) ~ "\" height=\"400\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">";
     svg = svg ~ "<path d=\"M 64 304 H " ~ ToString(svg_width) ~ "\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
     svg = svg ~ "<path d=\"M 64 304 V 0\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
+    return svg;
+}
+
+// Returns the x axis with labels. Helper function.
+// Takes the amount of time to display on the graph in frames.
+function SVGXAxisGen(time) {
+    let svg = "";
     // Plot the labels on the x axis every 48 * GRAPH_SCALE seconds (default, every 48 pixels). Needs to be a multiple of 12 pixels to avoid awful rounding.
-    let totaltimesec = elapsedtime / 60;
+    let totaltimesec = time * GRAPH_SCALE / 60; // Number of pixels we can draw in
     let xaxisctr = 0; // Position in time per label
     while (xaxisctr < totaltimesec) {
         // Tick on line
@@ -155,6 +188,22 @@ function SVGChartGen {
         svg = svg ~ IntToString(minutes) ~ "m" ~ IntToString(seconds) ~ "s";
         svg = svg ~ "</text>";
         xaxisctr += 48 / GRAPH_SCALE;
+    }
+    return svg;
+}
+
+// Returns the y axis with labels. Helper function.
+// Takes the max value (for label scaling) and a supplementary label.
+function SVGYAxisGen(maxval, label) {
+    let svg = "";
+    // Add y axis labels. Note: 304 pixels worth of height to play with. We will want exactly 10 labels.
+    ascent(i in 0..10) {
+        // Tick on line
+        svg = svg ~ "<path d=\"M 60 " ~ ToString(304 - 300 * i/9) ~ " H 68\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
+        // Text Label
+        svg = svg ~ "<text x=\"54\" y=\"" ~ ToString(304 - 300 * i/9) ~ "\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"end\" dominant-baseline=\"central\">";
+        svg = svg ~ vtos("1.2f", maxval/9 * i) ~ label;
+        svg = svg ~ "</text>";
     }
     return svg;
 }
@@ -262,4 +311,10 @@ function wait(n) {
     loop(n) {
         yield;
     }
+}
+
+function parseFileName(filepath) {
+    // Essentially, split by /, get last
+    let pathunits = SplitString(filepath, "/");
+    return pathunits[length(pathunits) - 1];
 }

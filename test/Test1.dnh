@@ -13,7 +13,7 @@ let count = 0;
     SetAreaCommonData("dnhapm", "FinalizeEvent", EV_USER_STAGE + 2000);
     SetAreaCommonData("dnhapm", "OutputDirectory", GetCurrentScriptDirectory() ~ "./dnhapm-output/");
     SetAreaCommonData("dnhapm", "ScriptName", "TEST 1");
-    SetAreaCommonData("dnhapm", "GraphScale", 2);
+    SetAreaCommonData("dnhapm", "GraphScale", 8);
     StartScript(apm);
 }
 
