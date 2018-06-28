@@ -128,6 +128,7 @@ The system also allows for an arbitrary number of user notes. These user notes a
 ```java
 USER_NOTE_SLOTS = GetAreaCommonData("dnhapm", "UserNoteSlots", 2);
 EVENT_USER_NOTE = GetAreaCommonData("dnhapm", "UserNoteEvent", EV_USER_STAGE + 2050);
+ENABLE_NOTE_LINE = GetAreaCommonData("dnhapm", "EnableNoteLine", true);
 ```
 
 There are 2 note slots by default, and notes render at the bottom of the graph. By default, `EV_USER_STAGE + 2050` is used to write notes to the monitoring system. 
@@ -151,6 +152,8 @@ Another example, for making note of when certain attacks start - in this case a 
 ```
 
 When using the note system, please be careful of text length. If your graph scale is small, if your notes are large, and/or if your notes are closely spaced together, text may overlap and become hard to read. It may therefore be helpful to abbreviate your notes (e.g. "Midboss Spell 2" - "MS2", etc.).
+
+By default, all notes have a line dropped down from the x axis to their height for easy identification. The ENABLE_NOTE_LINE field adds another line up from the x axis to the top of the graph (in a lighter tone) for easier distinction where a note was placed. Depending on how you use the APM's notes, this may allow you to chunk the graph into 'phases' for easier analysis.
 
 # Current and Planned Features
 

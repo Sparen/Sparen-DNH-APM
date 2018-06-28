@@ -34,6 +34,7 @@ let AGGREGATE_LINE_OPACITY; // Opacity of the paths representing former data poi
 let USER_TEXT; // User defined text
 let USER_NOTE_SLOTS; // Number of User Note slots to use
 let EVENT_USER_NOTE; // Event to call via NotifyEvent/NotifyEventAll when the user wishes to log a note
+let ENABLE_NOTE_LINE; // Whether or not to render a line up through the graph at a note
 
 // Feature Set Customization
 let FEATURE_FPS_ENABLE; // Enable or disable FPS logging
@@ -67,6 +68,7 @@ let FEATURE_SCORE_LINECOLOR; // Color of the line, in HTML supported color
     USER_TEXT = GetAreaCommonData("dnhapm", "UserText", "");
     USER_NOTE_SLOTS = GetAreaCommonData("dnhapm", "UserNoteSlots", 2);
     EVENT_USER_NOTE = GetAreaCommonData("dnhapm", "UserNoteEvent", EV_USER_STAGE + 2050);
+    ENABLE_NOTE_LINE = GetAreaCommonData("dnhapm", "EnableNoteLine", true);
 
     FEATURE_FPS_ENABLE = GetAreaCommonData("dnhapm", "FPSEnable", true);
     FEATURE_FPS_UPDATEFREQ = GetAreaCommonData("dnhapm", "FPSUpdateFreq", 10);
@@ -138,7 +140,12 @@ function NotesToSVG {
             let notex = 64 + atoi(note[0]) * GRAPH_SCALE/60;
             let notey = 328 + atoi(note[1]) * 12;
             let notepath = "<path d=\"M " ~ ToString(notex) ~ " 304 V " ~ ToString(notey) ~ " H " ~ ToString(notex + 2) ~ "\" stroke=\"#DDDDDD\" stroke-width=\"1\" fill=\"none\"></path>";
-            svg = svg ~ notepath;
+            let notepath2 = "";
+            // If the note line is enabled, add another path upwards.
+            if (ENABLE_NOTE_LINE) {
+                notepath2 = "<path d=\"M " ~ ToString(notex) ~ " 304 V 0\" stroke=\"#EEEEEE\" stroke-width=\"1\" fill=\"none\"></path>";
+            }
+            svg = svg ~ notepath ~ notepath2;
         }
     }
     ascent(i in 0..length(notes)) {
