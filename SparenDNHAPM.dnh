@@ -70,7 +70,9 @@ let FEATURE_FPS_LINECOLOR; // Color of the line, in HTML supported color
     yield;
 }
 
-/* ---------------- FPS Logging ---------------- */
+/* ============================================================================= */
+/* ================================ FPS Logging ================================ */
+/* ============================================================================= */
 task APM_StartFPS {
     // Create output file
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
@@ -130,7 +132,9 @@ function APM_ChartGenFPS {
     return svg;
 }
 
-/* ---------------- Report Generation ---------------- */
+/* =================================================================================== */
+/* ================================ Report Generation ================================ */
+/* =================================================================================== */
 
 // Returns the SVG chart with everything except for paths and y axis labels. Helper function.
 function SVGChartGen {
@@ -165,7 +169,7 @@ function CSVtoArray(filepath) {
     let handle = ObjFile_Create(OBJ_FILE_TEXT);
     let status = ObjFile_Open(handle, filepath);
     while (!status) {
-        //WriteLog("CSVtoArray: Reading file " ~ filepath ~ " failed.");
+        WriteLog("CSVtoArray: Reading file " ~ filepath ~ " failed.");
         status = ObjFile_Open(handle, filepath);
         yield;
     }
@@ -185,7 +189,7 @@ function CSVtoArray(filepath) {
     return toreturn;
 }
 
-function GenerateReport() {
+task GenerateReport() {
     finished = true;
     yield; //Wait for all tasks fo terminate and flush
 
@@ -234,6 +238,10 @@ function GenerateReport() {
     Obj_Delete(outputfile);
 }
 
+/* ================================================================================== */
+/* ================================ Helper Functions ================================ */
+/* ================================================================================== */
+
 // Returns max value in array. Assumes string inputs.
 // Thankfully DNH allows us to compare strings like so: "3.0" < "2.4"
 function maxarr(arr) {
@@ -248,4 +256,10 @@ function maxarr(arr) {
         }
     }
     return ator(maxval);
+}
+
+function wait(n) {
+    loop(n) {
+        yield;
+    }
 }
