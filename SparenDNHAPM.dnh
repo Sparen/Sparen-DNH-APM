@@ -28,6 +28,8 @@ let ENABLE_AGGREGATE; // Whether or not to aggregate all data in directory when 
 let GRAPH_SCALE; // Scale of the x axis on the graph. To be implemented later.
 let AGGREGATE_LINE_OPACITY; // Opacity of the paths representing former data points.
 
+let USER_TEXT; // User defined text
+
 // Feature Set Customization
 let FEATURE_FPS_ENABLE; // Enable or disable FPS logging
 let FEATURE_FPS_UPDATEFREQ; // Update frequency, in frames.
@@ -48,6 +50,8 @@ let FEATURE_FPS_LINECOLOR; // Color of the line, in HTML supported color
     ENABLE_AGGREGATE = GetAreaCommonData("dnhapm", "EnableAggregate", true);
     GRAPH_SCALE = GetAreaCommonData("dnhapm", "GraphScale", 1);
     AGGREGATE_LINE_OPACITY = GetAreaCommonData("dnhapm", "AggregateLineOpacity", 0.25);
+
+    USER_TEXT = GetAreaCommonData("dnhapm", "UserText", "");
 
     FEATURE_FPS_ENABLE = GetAreaCommonData("dnhapm", "FPSEnable", true);
     FEATURE_FPS_UPDATEFREQ = GetAreaCommonData("dnhapm", "FPSUpdateFreq", 10);
@@ -265,6 +269,7 @@ task GenerateReport() {
     // Write Opening Header
     let openingheaderhtml = "<h1 class=\"header\">Danmakufu APM for script: " ~ SCRIPT_NAME ~ "</h1>" ~
         "<div><p>Start Time: " ~ starttime[0..4] ~ " " ~ starttime[4..6] ~ " " ~ starttime[6..8] ~ " " ~ starttime[8..10] ~ ":" ~ starttime[10..12] ~ ":" ~ starttime[12..14] ~ "</p><p>Player ID: " ~ player ~ "</p></div>";
+    openingheaderhtml = openingheaderhtml ~ ToString(USER_TEXT);
     ObjFileT_AddLine(outputfile, openingheaderhtml);
 
     // --------------- Start Reporting ---------------

@@ -16,6 +16,7 @@ let count = 0;
     SetAreaCommonData("dnhapm", "OutputDirectory", GetCurrentScriptDirectory() ~ "./dnhapm-output/");
     SetAreaCommonData("dnhapm", "ScriptName", "TEST 1");
     SetAreaCommonData("dnhapm", "GraphScale", 8);
+    SetAreaCommonData("dnhapm", "UserText", "This metric was generated from test/Test1.dnh.<br>Testing User Text.");
     StartScript(apm);
 }
 
