@@ -3,6 +3,8 @@
 #Text["Testing for APM"]
 #ScriptVersion[3]
 
+#include"script/default_system/Default_ShotConst.txt"
+
 let objBoss;
 let objScene=GetEnemyBossSceneObjectID();
 
@@ -49,30 +51,30 @@ let count = 0;
 task taskA{
     if(ObjEnemy_GetInfo(objBoss, INFO_LIFE) <= 0){return;}//Default kill to prevent (0,0) spawning
     let angleT = rand(0,360);
-    loop(6){ //Number of times it shoots
+    loop(6) { //Number of times it shoots
         if(ObjEnemy_GetInfo(objBoss, INFO_LIFE) <= 0){return;}//Default kill to prevent (0,0) spawning
-        loop(6){ //Number of arrows in the loop.
+        loop(6) { //Number of arrows in the loop.
             ascent(i in 0..4){
-                CreateShotA1(ObjMove_GetX(objBoss), ObjMove_GetY(objBoss), 3-i*0.25, angleT+i*4, 5, 0);
+                CreateShotA1(ObjMove_GetX(objBoss), ObjMove_GetY(objBoss), 3-i*0.25, angleT+i*4, 1, 0);
             }
             descent(i in 0..4){
-                CreateShotA1(ObjMove_GetX(objBoss), ObjMove_GetY(objBoss), 3-i*0.25, angleT-i*4, 5, 0);
+                CreateShotA1(ObjMove_GetX(objBoss), ObjMove_GetY(objBoss), 3-i*0.25, angleT-i*4, 1, 0);
             }
-            angleT+=360/6;
+            angleT += 360/6;
         }
-        loop(15){yield;}
+        wait(15);
         angleT += 360/5;
     }
 }
 
 task TFinalize {
-    while(ObjEnemy_GetInfo(objBoss,INFO_LIFE)>0){yield;}
+    while(ObjEnemy_GetInfo(objBoss,INFO_LIFE) > 0){yield;}
     NotifyEventAll(EV_USER_STAGE + 2000, "");
     loop(12){yield;}
     DeleteShotAll(TYPE_ALL, TYPE_ITEM); //All shots become point items
     Obj_Delete(objBoss);
     DeleteShotAll(TYPE_ALL,TYPE_IMMEDIATE);
-    let arr = GetShotIdInCircleA2(GetCenterX,GetCenterY,1000,TARGET_ENEMY);
+    let arr = GetShotIdInCircleA2(GetCenterX, GetCenterY, 1000, TARGET_ENEMY);
     ascent(i in 0..length(arr)){Obj_Delete(arr[i]);}
     SetAutoDeleteObject(true);
     Reset2DCamera;//Because of screen shaking and spell background being misplaced
@@ -81,11 +83,11 @@ task TFinalize {
 }
 
 function GetCenterX() {
-    return 192;
+    return GetStgFrameWidth/2;
 }
 
 function GetCenterY() {
-    return 224;
+    return GetStgFrameHeight/2;
 }
 
 function wait(n) {

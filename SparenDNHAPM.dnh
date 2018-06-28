@@ -143,9 +143,9 @@ function APM_ChartGenFPS {
         }
     }
     // Chart Basics 
-    let svg = SVGChartGen(maxtime * 60/FEATURE_FPS_UPDATEFREQ);
+    let svg = SVGChartGen(maxtime * FEATURE_FPS_UPDATEFREQ/60);
     // X Axis Labels
-    svg = svg ~ SVGXAxisGen(maxtime * 60/FEATURE_FPS_UPDATEFREQ);
+    svg = svg ~ SVGXAxisGen(maxtime * FEATURE_FPS_UPDATEFREQ/60);
     // Y Axis Labels
     svg = svg ~ SVGYAxisGen(maxfps, "FPS");
     // Add paths
@@ -154,6 +154,8 @@ function APM_ChartGenFPS {
     }
     // Close SVG
     svg = svg ~ "</svg>";
+    svg = svg ~ "<p>Logged a maximum of " ~ IntToString(maxtime) ~ " data points spanning " ~ ToString(maxtime * FEATURE_FPS_UPDATEFREQ/60) ~ " seconds.</p>";
+    svg = svg ~ "<p>Logged a maximum FPS of " ~ vtos("1.2f", maxfps) ~ ".</p>";  
     return svg;
 }
 
@@ -162,25 +164,25 @@ function APM_ChartGenFPS {
 /* =================================================================================== */
 
 // Returns the SVG chart header. Helper function.
-// Takes the amount of time to display on the graph in frames.
+// Takes the amount of time to display on the graph in seconds.
 function SVGChartGen(time) {
-    let svg_width = time * GRAPH_SCALE / 60 + 128; // By default, a second is one pixel. 64 pixel buffer for left sidebar, 64 for right sidebar
-    let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" ~ ToString(svg_width) ~ "\" height=\"400\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">";
+    let svg_width = time * GRAPH_SCALE + 128; // By default, a second is one pixel. 64 pixel buffer for left sidebar, 64 for right sidebar
+    let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" ~ ToString(svg_width) ~ "\" height=\"320\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">";
     svg = svg ~ "<path d=\"M 64 304 H " ~ ToString(svg_width) ~ "\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
     svg = svg ~ "<path d=\"M 64 304 V 0\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
     return svg;
 }
 
-// Returns the x axis with labels. Helper function.
-// Takes the amount of time to display on the graph in frames.
+// Returns the x axis with as many 48-pixel spaced labels as possible. Helper function.
+// Takes the amount of time to display on the graph in seconds.
 function SVGXAxisGen(time) {
     let svg = "";
     // Plot the labels on the x axis every 48 * GRAPH_SCALE seconds (default, every 48 pixels). Needs to be a multiple of 12 pixels to avoid awful rounding.
-    let totaltimesec = time * GRAPH_SCALE / 60; // Number of pixels we can draw in
-    let xaxisctr = 0; // Position in time per label
-    while (xaxisctr < totaltimesec) {
+    let totaltimesec = time * GRAPH_SCALE; // Number of pixels we can draw in
+    let xaxisctr = 0; // Position in time per label. Unit is NOT pixels.
+    while (xaxisctr * GRAPH_SCALE < totaltimesec) {
         // Tick on line
-        svg = svg ~ "<path d=\"M " ~ ToString(64 + xaxisctr * GRAPH_SCALE) ~ " 300 V 308\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
+        svg = svg ~ "<path d=\"M " ~ ToString(64 + xaxisctr * GRAPH_SCALE) ~ " 302 V 308\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
         // Text Label
         svg = svg ~ "<text x=\"" ~ ToString(64 + xaxisctr * GRAPH_SCALE) ~ "\" y=\"316\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"middle\" dominant-baseline=\"central\">";
         let minutes = truncate(xaxisctr/60);
@@ -199,7 +201,7 @@ function SVGYAxisGen(maxval, label) {
     // Add y axis labels. Note: 304 pixels worth of height to play with. We will want exactly 10 labels.
     ascent(i in 0..10) {
         // Tick on line
-        svg = svg ~ "<path d=\"M 60 " ~ ToString(304 - 300 * i/9) ~ " H 68\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
+        svg = svg ~ "<path d=\"M 60 " ~ ToString(304 - 300 * i/9) ~ " H 66\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
         // Text Label
         svg = svg ~ "<text x=\"54\" y=\"" ~ ToString(304 - 300 * i/9) ~ "\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"end\" dominant-baseline=\"central\">";
         svg = svg ~ vtos("1.2f", maxval/9 * i) ~ label;

@@ -46,6 +46,17 @@ By default, the APM will log everything specified, but there are Common Data to 
 
 This section will be populated with data as new features are implemented.
 
+##### FPS Monitoring
+```
+FEATURE_FPS_ENABLE = GetAreaCommonData("dnhapm", "FPSEnable", true);
+FEATURE_FPS_UPDATEFREQ = GetAreaCommonData("dnhapm", "FPSUpdateFreq", 10);
+FEATURE_FPS_LINECOLOR = GetAreaCommonData("dnhapm", "FPSLineColor", "#2266FF");
+```
+
+For FPS Monitoring, there are three fields - one for enabling the feature, one for the update frequency (defaults to every 10 frames), and one for the line color in the graphs (defaults to #2266FF).
+
+For FPS Monitoring, note that Danmakufu internally updates FPS infrequently, so even with an update frequency of every 10 frames, you will get very straight lines.
+
 ### Downloads
 
 This project is currently under construction and is not yet recommended for use. 
