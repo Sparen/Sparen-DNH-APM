@@ -44,6 +44,8 @@ let count = 0;
     }
 
     if(count % 360 == 0 && count >= 0){taskA;}
+
+    if(count == 0) {NotifyEventAll(EV_USER_STAGE + 2050, ["0", "Start"]);}
     
     count++;
     yield;
@@ -51,6 +53,7 @@ let count = 0;
 
 task taskA{
     if(ObjEnemy_GetInfo(objBoss, INFO_LIFE) <= 0){return;}//Default kill to prevent (0,0) spawning
+    NotifyEventAll(EV_USER_STAGE + 2050, ["1", "Attack"]);
     let angleT = rand(0,360);
     loop(6) { //Number of times it shoots
         if(ObjEnemy_GetInfo(objBoss, INFO_LIFE) <= 0){return;}//Default kill to prevent (0,0) spawning

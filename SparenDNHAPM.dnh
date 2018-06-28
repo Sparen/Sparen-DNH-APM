@@ -30,6 +30,8 @@ let GRAPH_SCALE; // Scale of the x axis on the graph. To be implemented later.
 let AGGREGATE_LINE_OPACITY; // Opacity of the paths representing former data points.
 
 let USER_TEXT; // User defined text
+let USER_NOTE_SLOTS; // Number of User Note slots to use
+let EVENT_USER_NOTE; // Event to call via NotifyEvent/NotifyEventAll when the user wishes to log a note
 
 // Feature Set Customization
 let FEATURE_FPS_ENABLE; // Enable or disable FPS logging
@@ -57,6 +59,8 @@ let FEATURE_GRAZE_LINECOLOR; // Color of the line, in HTML supported color
     AGGREGATE_LINE_OPACITY = GetAreaCommonData("dnhapm", "AggregateLineOpacity", 0.25);
 
     USER_TEXT = GetAreaCommonData("dnhapm", "UserText", "");
+    USER_NOTE_SLOTS = GetAreaCommonData("dnhapm", "UserNoteSlots", 2);
+    EVENT_USER_NOTE = GetAreaCommonData("dnhapm", "UserNoteEvent", EV_USER_STAGE + 2050);
 
     FEATURE_FPS_ENABLE = GetAreaCommonData("dnhapm", "FPSEnable", true);
     FEATURE_FPS_UPDATEFREQ = GetAreaCommonData("dnhapm", "FPSUpdateFreq", 10);
@@ -81,11 +85,48 @@ let FEATURE_GRAZE_LINECOLOR; // Color of the line, in HTML supported color
     case(EVENT_DNHAPM_FINALIZE) {
         GenerateReport;
     }
+    case(EVENT_USER_NOTE) {
+        let arg = GetEventArgument(0); // Number of event, Contents of event
+        LogNote(arg[0], arg[1]);
+    }
 }
 
 @MainLoop {
     elapsedtime += 1; // update counter
     yield;
+}
+
+/* ============================================================================== */
+/* ================================ Note Logging ================================ */
+/* ============================================================================== */
+// For now, we will store notes per-run and will not save them to disk.
+//let notefile = ObjFile_Create(OBJ_FILE_TEXT);
+//let notefilepath = OUTPUT_DIRECTORY ~ "apmnote-" ~ starttime ~ ".txt";
+//ObjFile_OpenNW(notefile, notefilepath);
+let notestring = "";
+
+function LogNote(key, val) {
+    let newnote = IntToString(elapsedtime) ~ "," ~ key ~ "," ~ val;
+    //ObjFileT_AddLine(notefile, newnote);
+    //ObjFile_Store(notefile);
+    notestring = notestring ~ newnote ~ "\n";
+}
+
+function NotesToSVG {
+    let svg = "";
+    //Parse note by new line, then by comma.
+    let notes = SplitString(notestring, "\n");
+    ascent(i in 0..length(notes)) {
+        let note = SplitString(notes[i], ",");
+        let notex = 64 + atoi(note[0]) * GRAPH_SCALE/60;
+        let notey = 328 + atoi(note[1]) * 12;
+        let notepath = "<path d=\"M " ~ ToString(notex) ~ " 304 V " ~ ToString(notey) ~ " H " ~ ToString(notex + 2) ~ "\" stroke=\"#DDDDDD\" stroke-width=\"1\" fill=\"none\"></path>";
+        let notetext = "<text x=\"" ~ ToString(notex + 4) ~ "\" y=\"" ~ ToString(notey) ~ "\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"start\" dominant-baseline=\"central\">";
+        notetext = notetext ~ note[2];
+        notetext = notetext ~ "</text>";
+        svg = svg ~ notetext ~ notepath;
+    }
+    return svg;
 }
 
 /* ============================================================================= */
@@ -164,6 +205,8 @@ function APM_ChartGenFPS {
     svg = svg ~ SVGXAxisGen(maxtime * FEATURE_FPS_UPDATEFREQ/60);
     // Y Axis Labels
     svg = svg ~ SVGYAxisGen(maxfps, "FPS");
+    // Notes
+    svg = svg ~ NotesToSVG;
     // Add paths
     ascent(i in 0..length(paths)) {
         svg = svg ~ paths[i];
@@ -251,6 +294,8 @@ function APM_ChartGenGraze {
     svg = svg ~ SVGXAxisGen(maxtime * FEATURE_GRAZE_UPDATEFREQ/60);
     // Y Axis Labels
     svg = svg ~ SVGYAxisGen(maxgraze, "");
+    // Notes
+    svg = svg ~ NotesToSVG;
     // Add paths
     ascent(i in 0..length(paths)) {
         svg = svg ~ paths[i];
@@ -270,7 +315,7 @@ function APM_ChartGenGraze {
 // Takes the amount of time to display on the graph in seconds.
 function SVGChartGen(time) {
     let svg_width = time * GRAPH_SCALE + 128; // By default, a second is one pixel. 64 pixel buffer for left sidebar, 64 for right sidebar
-    let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" ~ ToString(svg_width) ~ "\" height=\"320\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">";
+    let svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" ~ ToString(svg_width) ~ "\" height=\"" ~ IntToString(320 + 12 * USER_NOTE_SLOTS) ~ "\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">";
     svg = svg ~ "<path d=\"M 64 304 H " ~ ToString(svg_width) ~ "\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
     svg = svg ~ "<path d=\"M 64 304 V 0\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
     return svg;
