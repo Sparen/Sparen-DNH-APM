@@ -1,10 +1,12 @@
 # Sparen's Danmakufu Application Monitoring System
 
-Welcome to the repository for Sparen's Danmakufu Application Monitoring System! This system aims to track statistics over the lifetime of a script, outputting a report on request.
+Welcome to the repository for Sparen's Danmakufu Application Monitoring System! This system aims to track statistics over the lifetime of a script, outputting a report on request. 
+
+This software is capable of profiling a single run of a script and monitoring behavior as well as aggregating data over multiple runs of a script, providing average case data as well as other visualizations. 
 
 ### Usage
 
-To use the APM, you will first need to find a Stage Script (or Plural or Single) to monitor.
+To use the APM, you will first need to find a Stage Script (or Plural or Single) to monitor or profile.
 
 In `@Loading` for the script of your choice, do the following:
 
@@ -20,7 +22,9 @@ Adjust the parameter of `LoadScript()` to the path to `SparenDNHAPM.dnh`. Once y
 
 At the end of your script, you will need to notify the APM that it needs to generate its report. To do this, use NotifyEventAll. By default, the APM uses `EV_USER_STAGE + 2048` and will output to `GetCurrentScriptDirectory() ~ "./dnhapm-output/"`.
 
-**Replays are NOT supported**
+This script works when saves as part of a replay, but replays made before the profiler was implemented will desync when run after the profiler has been added.
+
+For usage examples, refer to `test/*`.
 
 ### Customization
 
