@@ -112,9 +112,7 @@ Planned:
 
 ### Downloads
 
-This project is currently under construction and is not yet recommended for use. 
-
-Official Releases will be provided via GitHub releases.
+Official Releases are provided via GitHub releases.
 
 ### Contributing and Credits
 
