@@ -61,7 +61,7 @@ let FEATURE_SCORE_LINECOLOR; // Color of the line, in HTML supported color
     OUTPUT_DIRECTORY = GetAreaCommonData("dnhapm", "OutputDirectory", currdir ~ "./dnhapm-output/");
     SCRIPT_NAME = GetAreaCommonData("dnhapm", "ScriptName", "--Unnamed Script--");
     ENABLE_AGGREGATE = GetAreaCommonData("dnhapm", "EnableAggregate", true);
-    GRAPH_SCALE = GetAreaCommonData("dnhapm", "GraphScale", 1);
+    GRAPH_SCALE = GetAreaCommonData("dnhapm", "GraphScale", 2);
     AGGREGATE_LINE_OPACITY = GetAreaCommonData("dnhapm", "AggregateLineOpacity", 0.25);
 
     USER_TEXT = GetAreaCommonData("dnhapm", "UserText", "");

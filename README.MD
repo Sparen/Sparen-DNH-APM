@@ -62,13 +62,13 @@ EVENT_DNHAPM_FINALIZE = GetAreaCommonData("dnhapm", "FinalizeEvent", EV_USER_STA
 OUTPUT_DIRECTORY = GetAreaCommonData("dnhapm", "OutputDirectory", GetCurrentScriptDirectory() ~ "./dnhapm-output/");
 SCRIPT_NAME = GetAreaCommonData("dnhapm", "ScriptName", "--Unnamed Script--");
 ENABLE_AGGREGATE = GetAreaCommonData("dnhapm", "EnableAggregate", true);
-GRAPH_SCALE = GetAreaCommonData("dnhapm", "GraphScale", 1);
+GRAPH_SCALE = GetAreaCommonData("dnhapm", "GraphScale", 2);
 AGGREGATE_LINE_OPACITY = GetAreaCommonData("dnhapm", "AggregateLineOpacity", 0.25);
 ```
 
 Basic configuration for the APM allows you to set the Event that is used to trigger writing the report (defaults to `EV_USER_STAGE + 2048`), the output directory of the report (defaults to `GetCurrentScriptDirectory() ~ "./dnhapm-output/"`), and the name of the script within the report (defaults to `"--Unnamed Script--"`).
 
-Aggregate will load past data in the OUTPUT_DIRECTORY into the graphs (defaults to `true`). GRAPH_SCALE is the scale of the x axis of the graph (defaults to `1`, or one pixel per second). This means that a 5 minute script will fit into 300 pixels at default scale, or 600 pixels at a scale of 2.
+Aggregate will load past data in the OUTPUT_DIRECTORY into the graphs (defaults to `true`). GRAPH_SCALE is the scale of the x axis of the graph (defaults to `2`, or two pixel per second). This means that a 5 minute script will fit into 300 pixels at a scale of 1, or 600 pixels at a scale of 2 (default).
 
 In regards to aggregate data, this program assumes that the settings for prior runs were the same (i.e. it assumes that update frequencies, graph scale, etc. were the same as the current run). Former runs will appear with opacity equal to AGGREGATE_LINE_OPACITY (defaults to alpha of 0.25). It is recommended that you use a different output directory for each script to monitor. 
 
