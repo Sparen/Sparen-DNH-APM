@@ -4,7 +4,7 @@ Welcome to the repository for Sparen's Danmakufu Application Monitoring System! 
 
 This software is capable of profiling a single run of a script and monitoring behavior as well as aggregating data over multiple runs of a script, providing average case data as well as other visualizations. 
 
-## Usage
+# Usage
 
 To use the APM, you will first need to find a Stage Script (or Plural or Single) to monitor or profile.
 
@@ -26,11 +26,11 @@ This script works when saves as part of a replay, but replays made before the pr
 
 For usage examples, refer to `test/*`.
 
-## Customization
+# Customization
 
 The APM uses CommonData in the "dnhapm" area for configuration. To set configuration, `SetAreaCommonData("dnhapm", "FieldToAdjust", New Value);` in `@Loading` between `LoadScript()`, which initializes the Common Data Area, and `StartScript()`, which runs the script with the specified parameters.
 
-### Basic Configuration
+## Basic Configuration
 ```
 EVENT_DNHAPM_FINALIZE = GetAreaCommonData("dnhapm", "FinalizeEvent", EV_USER_STAGE + 2048);
 OUTPUT_DIRECTORY = GetAreaCommonData("dnhapm", "OutputDirectory", GetCurrentScriptDirectory() ~ "./dnhapm-output/");
@@ -46,13 +46,13 @@ Aggregate will load past data in the OUTPUT_DIRECTORY into the graphs (defaults 
 
 In regards to aggregate data, this program assumes that the settings for prior runs were the same (i.e. it assumes that update frequencies, graph scale, etc. were the same as the current run). Former runs will appear with opacity equal to AGGREGATE_LINE_OPACITY (defaults to alpha of 0.25). It is recommended that you use a different output directory for each script to monitor. 
 
-### Specific Configuration
+## Specific Configuration
 
 By default, the APM will log everything specified, but there are Common Data to disable these features. Within each feature set, there are a number of different fields that can be adjusted.
 
 This section will be populated with data as new features are implemented.
 
-#### FPS Monitoring
+### FPS Monitoring
 <p align="center">
     <img src="./sample-metric/fpsexample.png">
     <i>Sample FPS graph, showing lag spikes at plural loading and spellcard declaration</i>
@@ -67,7 +67,7 @@ For FPS Monitoring, there are three fields - one for enabling the feature, one f
 
 For FPS Monitoring, note that Danmakufu internally updates FPS infrequently, so even with an update frequency of every 10 frames, you will get very straight lines.
 
-#### Graze Monitoring
+### Graze Monitoring
 ```
 FEATURE_GRAZE_ENABLE = GetAreaCommonData("dnhapm", "GrazeEnable", true);
 FEATURE_GRAZE_UPDATEFREQ = GetAreaCommonData("dnhapm", "GrazeUpdateFreq", 10);
@@ -100,7 +100,7 @@ This writes the "Start" note to note slot 0 (note slots are zero-indexed, and ar
 
 When using the note system, please be careful of text length. If your graph scale is small, if your notes are large, and/or if your notes are closely spaced together, text may overlap and become hard to read. It may therefore be helpful to abbreviate your notes (e.g. "Midboss Spell 2" - "MS2", etc.).
 
-## Current and Planned Features
+# Current and Planned Features
 
 Current:
 * FPS Monitoring  
@@ -114,11 +114,11 @@ Planned:
 * Spellcard graph overlay (may only be usable on non-aggregate setups)  
 * Combined graphs (stretch goal)  
 
-## Downloads
+# Downloads
 
 Official Releases are provided via GitHub releases.
 
-## Contributing and Credits
+# Contributing and Credits
 
 Improvements and bug reports should be submitted via GitHub issues.
 
