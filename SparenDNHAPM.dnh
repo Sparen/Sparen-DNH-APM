@@ -190,41 +190,11 @@ task APM_StartFPS {
 // Returns the SVG chart for FPS in its entirety.
 function APM_ChartGenFPS {
     WriteLog("APM_ChartGenFPS: Starting.");
-    let paths = [];
-    // First, we will determine the scale of the x and y axes and log all of the necessary files.
-    let maxfps = 0; // Maximum FPS 
-    let maxtime = 0; // Number of DATA POINTS collected - will be scaled later
-    let currfilepath = OUTPUT_DIRECTORY ~ "apmfps-" ~ starttime ~ ".csv"; // Current run, for later reference
-    let filepathlist = GetFilePathList(OUTPUT_DIRECTORY);
-    ascent(i in 0..length(filepathlist)) {
-        // First, retrieve the file name
-        let filename = parseFileName(filepathlist[i]);
-        //WriteLog("APM_ChartGenFPS DEBUG: testing on " ~ filename);
-        // We only read the file if aggregating and a fps file, or if it's the file we just set up.
-        if (filename[0..6] == "apmfps" && ENABLE_AGGREGATE || (filename == currfilepath)) {
-            //WriteLog("APM_ChartGenFPS DEBUG: running on " ~ filename);
-            // See if this one sets a new maxfps
-            let filedatapoints = CSVtoArray(filepathlist[i]);
-            let filemaxfps = maxarr(filedatapoints);
-            if (filemaxfps > maxfps) {maxfps = filemaxfps;}
-            // See if this one sets a new maxtime
-            if (length(filedatapoints) > maxtime) {maxtime = length(filedatapoints);}
-            // Generate path. If filepathlist[i] is the current file, then opacity is set to 1, AGGREGATE_LINE_OPACITY otherwise.
-            let opacity = 1;
-            if (filepathlist[i] != currfilepath) {opacity = AGGREGATE_LINE_OPACITY;}
-            let newpath = "<path d=\"M 64 304 ";
-            // Iterate over the data points. Recall that by default, a second is one pixel.
-            // Also recall that each data point is FEATURE_FPS_UPDATEFREQ frames apart.
-            let basex = 64;
-            ascent(j in 0..length(filedatapoints)) {
-                let nodex = basex + j * FEATURE_FPS_UPDATEFREQ/60 * GRAPH_SCALE;
-                let nodey = 304 - 300 * ator(filedatapoints[j])/maxfps;
-                newpath = newpath ~ "L " ~ ToString(nodex) ~ " " ~ ToString(nodey) ~ " ";
-            }
-            newpath = newpath ~ "\" stroke=\"" ~ FEATURE_FPS_LINECOLOR ~ "\" stroke-width=\"1\" fill=\"none\" opacity=\"" ~ ToString(opacity) ~ "\"></path>";
-            paths = paths ~ [newpath];
-        }
-    }
+    // Determine max value of interest, max time, and paths to render from the files.
+    let cgcommon = APM_ChartGenCommon("apmfps", FEATURE_FPS_UPDATEFREQ, FEATURE_FPS_LINECOLOR);
+    let maxfps = cgcommon[0];
+    let maxtime = cgcommon[1];
+    let paths = GetAreaCommonData("dnhapm", "cgcpath_apmfps", []);
     // Chart Basics 
     let svg = SVGChartGen(maxtime * FEATURE_FPS_UPDATEFREQ/60);
     // Notes
@@ -279,41 +249,11 @@ task APM_StartGraze {
 // Returns the SVG chart for Graze in its entirety.
 function APM_ChartGenGraze {
     WriteLog("APM_ChartGenGraze: Starting.");
-    let paths = [];
-    // First, we will determine the scale of the x and y axes and log all of the necessary files.
-    let maxgraze = 0; // Maximum Graze 
-    let maxtime = 0; // Number of DATA POINTS collected - will be scaled later
-    let currfilepath = OUTPUT_DIRECTORY ~ "apmgraze-" ~ starttime ~ ".csv"; // Current run, for later reference
-    let filepathlist = GetFilePathList(OUTPUT_DIRECTORY);
-    ascent(i in 0..length(filepathlist)) {
-        // First, retrieve the file name
-        let filename = parseFileName(filepathlist[i]);
-        //WriteLog("APM_ChartGenGraze DEBUG: testing on " ~ filename);
-        // We only read the file if aggregating and a graze file, or if it's the file we just set up.
-        if (filename[0..8] == "apmgraze" && ENABLE_AGGREGATE || (filename == currfilepath)) {
-            //WriteLog("APM_ChartGenGraze DEBUG: running on " ~ filename);
-            // See if this one sets a new maxgraze
-            let filedatapoints = CSVtoArray(filepathlist[i]);
-            let filemaxgraze = maxarr(filedatapoints);
-            if (filemaxgraze > maxgraze) {maxgraze = filemaxgraze;}
-            // See if this one sets a new maxtime
-            if (length(filedatapoints) > maxtime) {maxtime = length(filedatapoints);}
-            // Generate path. If filepathlist[i] is the current file, then opacity is set to 1, AGGREGATE_LINE_OPACITY otherwise.
-            let opacity = 1;
-            if (filepathlist[i] != currfilepath) {opacity = AGGREGATE_LINE_OPACITY;}
-            let newpath = "<path d=\"M 64 304 ";
-            // Iterate over the data points. Recall that by default, a second is one pixel.
-            // Also recall that each data point is FEATURE_FPS_UPDATEFREQ frames apart.
-            let basex = 64;
-            ascent(j in 0..length(filedatapoints)) {
-                let nodex = basex + j * FEATURE_GRAZE_UPDATEFREQ/60 * GRAPH_SCALE;
-                let nodey = 304 - 300 * ator(filedatapoints[j])/maxgraze;
-                newpath = newpath ~ "L " ~ ToString(nodex) ~ " " ~ ToString(nodey) ~ " ";
-            }
-            newpath = newpath ~ "\" stroke=\"" ~ FEATURE_GRAZE_LINECOLOR ~ "\" stroke-width=\"1\" fill=\"none\" opacity=\"" ~ ToString(opacity) ~ "\"></path>";
-            paths = paths ~ [newpath];
-        }
-    }
+    // Determine max value of interest, max time, and paths to render from the files.
+    let cgcommon = APM_ChartGenCommon("apmgraze", FEATURE_GRAZE_UPDATEFREQ, FEATURE_GRAZE_LINECOLOR);
+    let maxgraze = cgcommon[0];
+    let maxtime = cgcommon[1];
+    let paths = GetAreaCommonData("dnhapm", "cgcpath_apmgraze", []);
     // Chart Basics 
     let svg = SVGChartGen(maxtime * FEATURE_GRAZE_UPDATEFREQ/60);
     // Notes
@@ -368,41 +308,11 @@ task APM_StartScore {
 // Returns the SVG chart for Score in its entirety.
 function APM_ChartGenScore {
     WriteLog("APM_ChartGenScore: Starting.");
-    let paths = [];
-    // First, we will determine the scale of the x and y axes and log all of the necessary files.
-    let maxscore = 0; // Maximum Score 
-    let maxtime = 0; // Number of DATA POINTS collected - will be scaled later
-    let currfilepath = OUTPUT_DIRECTORY ~ "apmscore-" ~ starttime ~ ".csv"; // Current run, for later reference
-    let filepathlist = GetFilePathList(OUTPUT_DIRECTORY);
-    ascent(i in 0..length(filepathlist)) {
-        // First, retrieve the file name
-        let filename = parseFileName(filepathlist[i]);
-        //WriteLog("APM_ChartGenScore DEBUG: testing on " ~ filename);
-        // We only read the file if aggregating and a score file, or if it's the file we just set up.
-        if (filename[0..8] == "apmscore" && ENABLE_AGGREGATE || (filename == currfilepath)) {
-            //WriteLog("APM_ChartGenScore DEBUG: running on " ~ filename);
-            // See if this one sets a new maxscore
-            let filedatapoints = CSVtoArray(filepathlist[i]);
-            let filemaxscore = maxarr(filedatapoints);
-            if (filemaxscore > maxscore) {maxscore = filemaxscore;}
-            // See if this one sets a new maxtime
-            if (length(filedatapoints) > maxtime) {maxtime = length(filedatapoints);}
-            // Generate path. If filepathlist[i] is the current file, then opacity is set to 1, AGGREGATE_LINE_OPACITY otherwise.
-            let opacity = 1;
-            if (filepathlist[i] != currfilepath) {opacity = AGGREGATE_LINE_OPACITY;}
-            let newpath = "<path d=\"M 64 304 ";
-            // Iterate over the data points. Recall that by default, a second is one pixel.
-            // Also recall that each data point is FEATURE_FPS_UPDATEFREQ frames apart.
-            let basex = 64;
-            ascent(j in 0..length(filedatapoints)) {
-                let nodex = basex + j * FEATURE_SCORE_UPDATEFREQ/60 * GRAPH_SCALE;
-                let nodey = 304 - 300 * ator(filedatapoints[j])/maxscore;
-                newpath = newpath ~ "L " ~ ToString(nodex) ~ " " ~ ToString(nodey) ~ " ";
-            }
-            newpath = newpath ~ "\" stroke=\"" ~ FEATURE_SCORE_LINECOLOR ~ "\" stroke-width=\"1\" fill=\"none\" opacity=\"" ~ ToString(opacity) ~ "\"></path>";
-            paths = paths ~ [newpath];
-        }
-    }
+    // Determine max value of interest, max time, and paths to render from the files.
+    let cgcommon = APM_ChartGenCommon("apmscore", FEATURE_SCORE_UPDATEFREQ, FEATURE_SCORE_LINECOLOR);
+    let maxscore = cgcommon[0];
+    let maxtime = cgcommon[1];
+    let paths = GetAreaCommonData("dnhapm", "cgcpath_apmscore", []);
     // Chart Basics 
     let svg = SVGChartGen(maxtime * FEATURE_SCORE_UPDATEFREQ/60);
     // Notes
@@ -425,6 +335,51 @@ function APM_ChartGenScore {
 /* =================================================================================== */
 /* ================================ Report Generation ================================ */
 /* =================================================================================== */
+
+// Function used by all file-reading graph generation functions.
+// Parses all relevant files in current directory to retrieve max value of interest (for y axis), max time (for x axis), and an array of paths to put on the graph.
+// Returns [maxval, maxtime]
+// Parameters: apmtype (apmscore/apmfps/...)
+function APM_ChartGenCommon(apmtype, updfreq, linecolor) {
+    let paths = [];
+    // First, we will determine the scale of the x and y axes and log all of the necessary files.
+    let maxval = 0; // Maximum value of interest 
+    let maxtime = 0; // Number of DATA POINTS collected - will be scaled later
+    let currfilepath = OUTPUT_DIRECTORY ~ apmtype ~ "-" ~ starttime ~ ".csv"; // Current run, for later reference
+    let filepathlist = GetFilePathList(OUTPUT_DIRECTORY);
+    ascent(i in 0..length(filepathlist)) {
+        // First, retrieve the file name
+        let filename = parseFileName(filepathlist[i]);
+        //WriteLog("APM_ChartGenScore DEBUG: testing on " ~ filename);
+        // We only read the file if aggregating and a val file, or if it's the file we just set up.
+        if (filename[0..length(apmtype)] == apmtype && ENABLE_AGGREGATE || (filename == currfilepath)) {
+            //WriteLog("APM_ChartGenScore DEBUG: running on " ~ filename);
+            // See if this one sets a new maxval
+            let filedatapoints = CSVtoArray(filepathlist[i]);
+            let filemaxval = maxarr(filedatapoints);
+            if (filemaxval > maxval) {maxval = filemaxval;}
+            // See if this one sets a new maxtime
+            if (length(filedatapoints) > maxtime) {maxtime = length(filedatapoints);}
+            // Generate path. If filepathlist[i] is the current file, then opacity is set to 1, AGGREGATE_LINE_OPACITY otherwise.
+            let opacity = 1;
+            if (filepathlist[i] != currfilepath) {opacity = AGGREGATE_LINE_OPACITY;}
+            let newpath = "<path d=\"M 64 304 ";
+            // Iterate over the data points. Recall that by default, a second is one pixel.
+            // Also recall that each data point is updfreq frames apart.
+            let basex = 64;
+            ascent(j in 0..length(filedatapoints)) {
+                let nodex = basex + j * updfreq/60 * GRAPH_SCALE;
+                let nodey = 304 - 300 * ator(filedatapoints[j])/maxval;
+                newpath = newpath ~ "L " ~ ToString(nodex) ~ " " ~ ToString(nodey) ~ " ";
+            }
+            newpath = newpath ~ "\" stroke=\"" ~ linecolor ~ "\" stroke-width=\"1\" fill=\"none\" opacity=\"" ~ ToString(opacity) ~ "\"></path>";
+            paths = paths ~ [newpath];
+        }
+    }
+    // Return path, maxval, and maxtime data
+    SetAreaCommonData("dnhapm", "cgcpath_" ~ apmtype, paths);
+    return [maxval, maxtime];
+}
 
 // Returns the SVG chart header. Helper function.
 // Takes the amount of time to display on the graph in seconds.
