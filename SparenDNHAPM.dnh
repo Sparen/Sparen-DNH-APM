@@ -109,22 +109,35 @@ function LogNote(key, val) {
     let newnote = IntToString(elapsedtime) ~ "," ~ key ~ "," ~ val;
     //ObjFileT_AddLine(notefile, newnote);
     //ObjFile_Store(notefile);
-    notestring = notestring ~ newnote ~ "\n";
+    notestring = notestring ~ newnote ~ "|";
 }
 
+// Takes the notes and generates SVG paths and text for them.
 function NotesToSVG {
+    WriteLog("NotesToSVG: Writing with: " ~ notestring);
     let svg = "";
-    //Parse note by new line, then by comma.
-    let notes = SplitString(notestring, "\n");
+    // Parse note by new line, then by comma.
+    let notes = SplitString(notestring, "|");
+    // Must do all paths, then all notes. Otherwise the paths will render over the text.
     ascent(i in 0..length(notes)) {
-        let note = SplitString(notes[i], ",");
-        let notex = 64 + atoi(note[0]) * GRAPH_SCALE/60;
-        let notey = 328 + atoi(note[1]) * 12;
-        let notepath = "<path d=\"M " ~ ToString(notex) ~ " 304 V " ~ ToString(notey) ~ " H " ~ ToString(notex + 2) ~ "\" stroke=\"#DDDDDD\" stroke-width=\"1\" fill=\"none\"></path>";
-        let notetext = "<text x=\"" ~ ToString(notex + 4) ~ "\" y=\"" ~ ToString(notey) ~ "\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"start\" dominant-baseline=\"central\">";
-        notetext = notetext ~ note[2];
-        notetext = notetext ~ "</text>";
-        svg = svg ~ notetext ~ notepath;
+        if (notes[i] != "") {
+            let note = SplitString(notes[i], ",");
+            let notex = 64 + atoi(note[0]) * GRAPH_SCALE/60;
+            let notey = 328 + atoi(note[1]) * 12;
+            let notepath = "<path d=\"M " ~ ToString(notex) ~ " 304 V " ~ ToString(notey) ~ " H " ~ ToString(notex + 2) ~ "\" stroke=\"#DDDDDD\" stroke-width=\"1\" fill=\"none\"></path>";
+            svg = svg ~ notepath;
+        }
+    }
+    ascent(i in 0..length(notes)) {
+        if (notes[i] != "") {
+            let note = SplitString(notes[i], ",");
+            let notex = 64 + atoi(note[0]) * GRAPH_SCALE/60;
+            let notey = 328 + atoi(note[1]) * 12;
+            let notetext = "<text x=\"" ~ ToString(notex + 4) ~ "\" y=\"" ~ ToString(notey) ~ "\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"start\" dominant-baseline=\"central\">";
+            notetext = notetext ~ note[2];
+            notetext = notetext ~ "</text>";
+            svg = svg ~ notetext;
+        }
     }
     return svg;
 }
@@ -201,12 +214,12 @@ function APM_ChartGenFPS {
     }
     // Chart Basics 
     let svg = SVGChartGen(maxtime * FEATURE_FPS_UPDATEFREQ/60);
+    // Notes
+    svg = svg ~ NotesToSVG;
     // X Axis Labels
     svg = svg ~ SVGXAxisGen(maxtime * FEATURE_FPS_UPDATEFREQ/60);
     // Y Axis Labels
     svg = svg ~ SVGYAxisGen(maxfps, "FPS");
-    // Notes
-    svg = svg ~ NotesToSVG;
     // Add paths
     ascent(i in 0..length(paths)) {
         svg = svg ~ paths[i];
@@ -290,12 +303,12 @@ function APM_ChartGenGraze {
     }
     // Chart Basics 
     let svg = SVGChartGen(maxtime * FEATURE_GRAZE_UPDATEFREQ/60);
+    // Notes
+    svg = svg ~ NotesToSVG;
     // X Axis Labels
     svg = svg ~ SVGXAxisGen(maxtime * FEATURE_GRAZE_UPDATEFREQ/60);
     // Y Axis Labels
     svg = svg ~ SVGYAxisGen(maxgraze, "");
-    // Notes
-    svg = svg ~ NotesToSVG;
     // Add paths
     ascent(i in 0..length(paths)) {
         svg = svg ~ paths[i];
