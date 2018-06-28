@@ -83,6 +83,7 @@ This section will be populated with data as new features are implemented.
     <img src="./sample-metric/fpsexample.png">
     <i>Sample FPS graph, showing lag spikes at plural loading and spellcard declaration</i>
 </p>
+
 ```java
 FEATURE_FPS_ENABLE = GetAreaCommonData("dnhapm", "FPSEnable", true);
 FEATURE_FPS_UPDATEFREQ = GetAreaCommonData("dnhapm", "FPSUpdateFreq", 10);
