@@ -10,7 +10,7 @@ To use the APM, you will first need to find a Stage Script (or Plural or Single)
 
 In `@Loading` for the script of your choice, do the following:
 
-```
+```java
 @Loading {
     let apm = LoadScript(GetCurrentScriptDirectory() ~ "./../SparenDNHAPM.dnh");
     //Set Common Data
@@ -20,9 +20,35 @@ In `@Loading` for the script of your choice, do the following:
 
 Adjust the parameter of `LoadScript()` to the path to `SparenDNHAPM.dnh`. Once you've set all of the CommonData, run `StartScript()` to begin the APM script.
 
-At the end of your script, you will need to notify the APM that it needs to generate its report. To do this, use NotifyEventAll. By default, the APM uses `EV_USER_STAGE + 2048` and will output to `GetCurrentScriptDirectory() ~ "./dnhapm-output/"`.
+Example below:
+```java
+@Loading {
+    let apm = LoadScript(GetCurrentScriptDirectory() ~ "./../../SparenDNHAPM.dnh");
+    SetAreaCommonData("dnhapm", "OutputDirectory", GetCurrentScriptDirectory() ~ "./../dnhapm-output/");
+    SetAreaCommonData("dnhapm", "ScriptName", "Moonstruck Magician");
+    SetAreaCommonData("dnhapm", "GraphScale", 3);
+    SetAreaCommonData("dnhapm", "GrazeUpdateFreq", 6);
+    SetAreaCommonData("dnhapm", "UserNoteSlots", 3);
+    StartScript(apm);
+}
+```
+
+At the end of your script (before it closes on regular termination/player death), you will need to notify the APM that it needs to generate its report. To do this, use NotifyEventAll. By default, the APM uses `EV_USER_STAGE + 2048` and will output to `GetCurrentScriptDirectory() ~ "./dnhapm-output/"`.
+
+Example below:
+```java
+task StageOver {
+    while(!finished && GetPlayerState() != STATE_END){yield;}
+    NotifyEventAll(EV_USER_STAGE + 2048, "");
+    loop(60){yield;}
+    ...
+    CloseStgScene();
+}
+```
 
 This script works when saves as part of a replay, but replays made before the profiler was implemented will desync when run after the profiler has been added.
+
+Typically, DNHAPM only needs to run in one script. If you wish to transition to a production or release environment after using the APM, all you need to do is block comment out the setup in `@Loading`, as the only other code needed to run DNHAMP will be Event calls in other scripts, which have minimal overhead.
 
 For usage examples, refer to `test/*`.
 
@@ -31,7 +57,7 @@ For usage examples, refer to `test/*`.
 The APM uses CommonData in the "dnhapm" area for configuration. To set configuration, `SetAreaCommonData("dnhapm", "FieldToAdjust", New Value);` in `@Loading` between `LoadScript()`, which initializes the Common Data Area, and `StartScript()`, which runs the script with the specified parameters.
 
 ## Basic Configuration
-```
+```java
 EVENT_DNHAPM_FINALIZE = GetAreaCommonData("dnhapm", "FinalizeEvent", EV_USER_STAGE + 2048);
 OUTPUT_DIRECTORY = GetAreaCommonData("dnhapm", "OutputDirectory", GetCurrentScriptDirectory() ~ "./dnhapm-output/");
 SCRIPT_NAME = GetAreaCommonData("dnhapm", "ScriptName", "--Unnamed Script--");
@@ -57,7 +83,7 @@ This section will be populated with data as new features are implemented.
     <img src="./sample-metric/fpsexample.png">
     <i>Sample FPS graph, showing lag spikes at plural loading and spellcard declaration</i>
 </p>
-```
+```java
 FEATURE_FPS_ENABLE = GetAreaCommonData("dnhapm", "FPSEnable", true);
 FEATURE_FPS_UPDATEFREQ = GetAreaCommonData("dnhapm", "FPSUpdateFreq", 10);
 FEATURE_FPS_LINECOLOR = GetAreaCommonData("dnhapm", "FPSLineColor", "#2266FF");
@@ -68,7 +94,7 @@ For FPS Monitoring, there are three fields - one for enabling the feature, one f
 For FPS Monitoring, note that Danmakufu internally updates FPS infrequently, so even with an update frequency of every 10 frames, you will get very straight lines.
 
 ### Graze Monitoring
-```
+```java
 FEATURE_GRAZE_ENABLE = GetAreaCommonData("dnhapm", "GrazeEnable", true);
 FEATURE_GRAZE_UPDATEFREQ = GetAreaCommonData("dnhapm", "GrazeUpdateFreq", 10);
 FEATURE_GRAZE_LINECOLOR = GetAreaCommonData("dnhapm", "GrazeLineColor", "#887777");
@@ -85,7 +111,7 @@ Use `SetAreaCommonData("dnhapm", "UserText", "");` to set the user text, which s
 
 The system also allows for an arbitrary number of user notes. These user notes are per-run and only reflect the last run of the script.
 
-```
+```java
 USER_NOTE_SLOTS = GetAreaCommonData("dnhapm", "UserNoteSlots", 2);
 EVENT_USER_NOTE = GetAreaCommonData("dnhapm", "UserNoteEvent", EV_USER_STAGE + 2050);
 ```
@@ -93,10 +119,22 @@ EVENT_USER_NOTE = GetAreaCommonData("dnhapm", "UserNoteEvent", EV_USER_STAGE + 2
 There are 2 note slots by default, and notes render at the bottom of the graph. By default, `EV_USER_STAGE + 2050` is used to write notes to the monitoring system. 
 
 For example:
-```
+```java
 NotifyEventAll(EV_USER_STAGE + 2050, ["0", "Start"]);
 ```
 This writes the "Start" note to note slot 0 (note slots are zero-indexed, and are passed as strings rather than integers).
+
+Another example, for making note of when certain attacks start - in this case a spellcard:
+```java
+@Initialize {
+    objBoss = ObjEnemy_Create(OBJ_ENEMY_BOSS);
+    ObjEnemy_Regist(objBoss);
+    CutIn(objBoss, "KORO", "Magic Sign \"The Glowing Waves of the Moon and Stars (N)\"", 5, BossCutIn, 0, 1, 384, 384);
+    NotifyEventAll(EV_USER_STAGE + 2050, ["1", "S3N"]);
+    ObjEnemyBossScene_StartSpell(objScene);
+    ...
+}
+```
 
 When using the note system, please be careful of text length. If your graph scale is small, if your notes are large, and/or if your notes are closely spaced together, text may overlap and become hard to read. It may therefore be helpful to abbreviate your notes (e.g. "Midboss Spell 2" - "MS2", etc.).
 
