@@ -203,7 +203,7 @@ function APM_ChartGenFPS {
     let maxtime = cgcommon[1];
     let paths = GetAreaCommonData("dnhapm", "cgcpath_apmfps", []);
     // Chart Basics 
-    let svg = SVGChartGen(maxtime * FEATURE_FPS_UPDATEFREQ/60);
+    let svg = "<div class=\"bodydiv\">" ~ SVGChartGen(maxtime * FEATURE_FPS_UPDATEFREQ/60);
     // Notes
     svg = svg ~ NotesToSVG;
     // X Axis Labels
@@ -217,7 +217,7 @@ function APM_ChartGenFPS {
     // Close SVG
     svg = svg ~ "</svg>";
     svg = svg ~ "<p>Logged a maximum of " ~ IntToString(maxtime) ~ " data points spanning " ~ ToString(maxtime * FEATURE_FPS_UPDATEFREQ/60) ~ " seconds.</p>";
-    svg = svg ~ "<p>Logged a maximum FPS of " ~ vtos("1.2f", maxfps) ~ ".</p>";  
+    svg = svg ~ "<p>Logged a maximum FPS of " ~ vtos("1.2f", maxfps) ~ ".</p></div>";  
     return svg;
 }
 
@@ -262,7 +262,7 @@ function APM_ChartGenGraze {
     let maxtime = cgcommon[1];
     let paths = GetAreaCommonData("dnhapm", "cgcpath_apmgraze", []);
     // Chart Basics 
-    let svg = SVGChartGen(maxtime * FEATURE_GRAZE_UPDATEFREQ/60);
+    let svg = "<div class=\"bodydiv\">" ~ SVGChartGen(maxtime * FEATURE_GRAZE_UPDATEFREQ/60);
     // Notes
     svg = svg ~ NotesToSVG;
     // X Axis Labels
@@ -276,7 +276,7 @@ function APM_ChartGenGraze {
     // Close SVG
     svg = svg ~ "</svg>";
     svg = svg ~ "<p>Logged a maximum of " ~ IntToString(maxtime) ~ " data points spanning " ~ ToString(maxtime * FEATURE_GRAZE_UPDATEFREQ/60) ~ " seconds.</p>";
-    svg = svg ~ "<p>Logged a maximum Graze of " ~ IntToString(maxgraze) ~ ".</p>";  
+    svg = svg ~ "<p>Logged a maximum Graze of " ~ IntToString(maxgraze) ~ ".</p></div>";  
     return svg;
 }
 
@@ -321,7 +321,7 @@ function APM_ChartGenScore {
     let maxtime = cgcommon[1];
     let paths = GetAreaCommonData("dnhapm", "cgcpath_apmscore", []);
     // Chart Basics 
-    let svg = SVGChartGen(maxtime * FEATURE_SCORE_UPDATEFREQ/60);
+    let svg = "<div class=\"bodydiv\">" ~ SVGChartGen(maxtime * FEATURE_SCORE_UPDATEFREQ/60);
     // Notes
     svg = svg ~ NotesToSVG;
     // X Axis Labels
@@ -335,7 +335,7 @@ function APM_ChartGenScore {
     // Close SVG
     svg = svg ~ "</svg>";
     svg = svg ~ "<p>Logged a maximum of " ~ IntToString(maxtime) ~ " data points spanning " ~ ToString(maxtime * FEATURE_SCORE_UPDATEFREQ/60) ~ " seconds.</p>";
-    svg = svg ~ "<p>Logged a maximum Score of " ~ IntToString(maxscore) ~ ".</p>";  
+    svg = svg ~ "<p>Logged a maximum Score of " ~ IntToString(maxscore) ~ ".</p></div>";  
     return svg;
 }
 
@@ -480,7 +480,7 @@ task GenerateReport() {
     ObjFileT_AddLine(outputfile, headerhtml);
 
     // Second, add CSS
-    let csshtml = "<style>body {font-family: \"Helvetica\";} .header {padding: 4px; background-color: #4466DD; color: white; border-left: 8px solid #88DDFF;}</style>";
+    let csshtml = "<style>body {font-family: \"Helvetica\";} .header {padding: 4px; background-color: #4466DD; color: white; border-left: 8px solid #88DDFF;} .bodydiv {padding-left: 8px;}</style>";
     ObjFileT_AddLine(outputfile, csshtml);
 
     // Begin body
@@ -488,28 +488,35 @@ task GenerateReport() {
     ObjFileT_AddLine(outputfile, bodystarthtml);
 
     // Write Opening Header
-    let openingheaderhtml = "<h1 class=\"header\">Danmakufu APM for script: " ~ SCRIPT_NAME ~ "</h1>" ~
-        "<div><p>Start Time: " ~ starttime[0..4] ~ " " ~ starttime[4..6] ~ " " ~ starttime[6..8] ~ " " ~ starttime[8..10] ~ ":" ~ starttime[10..12] ~ ":" ~ starttime[12..14] ~ "</p><p>Player ID: " ~ player ~ "</p></div>";
-    openingheaderhtml = openingheaderhtml ~ ToString(USER_TEXT);
+    let openingheaderhtml = "<h1 class=\"header\">Danmakufu APM Report for script: " ~ SCRIPT_NAME ~ "</h1>" ~
+        "<div class=\"bodydiv\"><p>Start Time: " ~ starttime[0..4] ~ " " ~ starttime[4..6] ~ " " ~ starttime[6..8] ~ " " ~ starttime[8..10] ~ ":" ~ starttime[10..12] ~ ":" ~ starttime[12..14] ~ "</p><p>Player ID: " ~ player ~ "</p>";
+    openingheaderhtml = openingheaderhtml ~ ToString(USER_TEXT) ~ "</div>";
     ObjFileT_AddLine(outputfile, openingheaderhtml);
 
     // --------------- Start Reporting ---------------
 
+    // Table of Contents
+    ObjFileT_AddLine(outputfile, "<div class=\"tableofcontents\"><h2 class=\"header\">Table of Contents</h2><ul>");
+    if (FEATURE_FPS_ENABLE) {ObjFileT_AddLine(outputfile, "<li><a href=\"#header_fps\">FPS Monitoring</a></li>");}
+    if (FEATURE_GRAZE_ENABLE) {ObjFileT_AddLine(outputfile, "<li><a href=\"#header_graze\">Graze Monitoring</a></li>");}
+    if (FEATURE_SCORE_ENABLE) {ObjFileT_AddLine(outputfile, "<li><a href=\"#header_score\">Score Monitoring</a></li>");}
+    ObjFileT_AddLine(outputfile, "</ul></div>");
+
     if (FEATURE_FPS_ENABLE) {
         while (!finished_fps) {yield;} //Wait for file to be written before reading
-        ObjFileT_AddLine(outputfile, "<h3 class=\"header\">FPS Monitoring</h3><p>Note: FPS values recorded here may be lower than usual due to the overhead caused by the APM.</p>");
+        ObjFileT_AddLine(outputfile, "<h3 class=\"header\" id=\"header_fps\">FPS Monitoring</h3><div class=\"bodydiv\"><p>Note: FPS values recorded here may be lower than usual due to the overhead caused by the APM.</p></div>");
         ObjFileT_AddLine(outputfile, APM_ChartGenFPS);
     }
 
     if (FEATURE_GRAZE_ENABLE) {
         while (!finished_graze) {yield;} //Wait for file to be written before reading
-        ObjFileT_AddLine(outputfile, "<h3 class=\"header\">Graze Monitoring</h3>");
+        ObjFileT_AddLine(outputfile, "<h3 class=\"header\" id=\"header_graze\">Graze Monitoring</h3>");
         ObjFileT_AddLine(outputfile, APM_ChartGenGraze);
     }
 
     if (FEATURE_SCORE_ENABLE) {
         while (!finished_score) {yield;} //Wait for file to be written before reading
-        ObjFileT_AddLine(outputfile, "<h3 class=\"header\">Score Monitoring</h3>");
+        ObjFileT_AddLine(outputfile, "<h3 class=\"header\" id=\"header_score\">Score Monitoring</h3>");
         ObjFileT_AddLine(outputfile, APM_ChartGenScore);
     }
 
