@@ -46,6 +46,8 @@ task StageOver {
 }
 ```
 
+Modified CSV files as well as HTML files will be generated in the target directory. The CSV files, if kept, will allow for successive runs of the APM to log past data should aggregation be enabled. The HTML files contain the reports.
+
 This script works when saves as part of a replay, but replays made before the profiler was implemented will desync when run after the profiler has been added.
 
 Typically, DNHAPM only needs to run in one script. If you wish to transition to a production or release environment after using the APM, all you need to do is block comment out the setup in `@Loading`, as the only other code needed to run DNHAMP will be Event calls in other scripts, which have minimal overhead.

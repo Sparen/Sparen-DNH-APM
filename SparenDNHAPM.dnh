@@ -168,7 +168,7 @@ function NotesToSVG {
 task APM_StartFPS {
     // Create output file
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
-    let outputfilepath = OUTPUT_DIRECTORY ~ "apmfps-" ~ starttime ~ ".csv";
+    let outputfilepath = OUTPUT_DIRECTORY ~ "apmfps-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".csv";
     ObjFile_OpenNW(outputfile, outputfilepath);
     let csvlog = ""; // CSV log
     let counter = 0;
@@ -227,7 +227,7 @@ function APM_ChartGenFPS {
 task APM_StartGraze {
     // Create output file
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
-    let outputfilepath = OUTPUT_DIRECTORY ~ "apmgraze-" ~ starttime ~ ".csv";
+    let outputfilepath = OUTPUT_DIRECTORY ~ "apmgraze-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".csv";
     ObjFile_OpenNW(outputfile, outputfilepath);
     let csvlog = ""; // CSV log
     let counter = 0;
@@ -286,7 +286,7 @@ function APM_ChartGenGraze {
 task APM_StartScore {
     // Create output file
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
-    let outputfilepath = OUTPUT_DIRECTORY ~ "apmscore-" ~ starttime ~ ".csv";
+    let outputfilepath = OUTPUT_DIRECTORY ~ "apmscore-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".csv";
     ObjFile_OpenNW(outputfile, outputfilepath);
     let csvlog = ""; // CSV log
     let counter = 0;
@@ -352,7 +352,7 @@ function APM_ChartGenCommon(apmtype, updfreq, linecolor) {
     // First, we will determine the scale of the x and y axes and log all of the necessary files.
     let maxval = 0; // Maximum value of interest 
     let maxtime = 0; // Number of DATA POINTS collected - will be scaled later
-    let currfilepath = OUTPUT_DIRECTORY ~ apmtype ~ "-" ~ starttime ~ ".csv"; // Current run, for later reference
+    let currfilepath = OUTPUT_DIRECTORY ~ apmtype ~ "-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".csv"; // Current run, for later reference
     let filepathlist = GetFilePathList(OUTPUT_DIRECTORY);
     ascent(i in 0..length(filepathlist)) {
         // First, retrieve the file name
@@ -470,7 +470,7 @@ task GenerateReport() {
     yield; //Wait for all tasks fo terminate and flush
 
     // Begin by creating our output HTML file.
-    let outputfilepath = OUTPUT_DIRECTORY ~ player ~ starttime ~ ".html";
+    let outputfilepath = OUTPUT_DIRECTORY ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".html";
     WriteLog("GenerateReport: Will write to " ~ outputfilepath);
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
     ObjFile_OpenNW(outputfile, outputfilepath);
