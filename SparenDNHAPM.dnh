@@ -481,7 +481,7 @@ function APM_ChartGenBombDeath {
                 if (currtime > maxtime) {maxtime = currtime;} // Update max time if the time for any data point is greater than the current max
 
                 // Generate circles. Using opacity of 1 regardless of aggregation settings since past runs seperated physically.
-                // Radius is 8 for current run, 1.5 for past runs. Text only for current run; past runs offset by 32 pixels.
+                // Radius is 8 for current run, 2 for past runs. Text only for current run; past runs offset by 32 pixels.
                 let basex = 64;
                 let nodex = basex + currtime/60 * GRAPH_SCALE;
                 let nodey = 64;
@@ -496,7 +496,7 @@ function APM_ChartGenBombDeath {
                 if (filepathlist[i] != currfilepath) {
                     //WriteLog("APM_ChartGenBombDeath DEBUG: Aggregate Check: " ~ filepathlist[i] ~ " != " ~ currfilepath);
                     nodey += 32;
-                    radius = 1.5;
+                    radius = 2;
                 }
                 let circtext = "<text x=\"" ~ ToString(nodex) ~ "\" y=\"" ~ ToString(nodey) ~ "\" font-family=\"Andale Mono, Monospace\" font-size=\"9px\" fill=\"#FFFFFF\" text-anchor=\"middle\" dominant-baseline=\"central\">" ~ currbd ~ "</text>";
                 let newcirc = "<circle r=\"" ~ ToString(radius) ~ "\" cx=\"" ~ ToString(nodex) ~ "\" cy=\"" ~ ToString(nodey) ~ "\" stroke=\"none\" fill=\"" ~ circcolor ~ "\"></circle>";
@@ -688,6 +688,7 @@ task GenerateReport() {
     // Write Opening Header
     let openingheaderhtml = "<h1 class=\"header\">Danmakufu APM Report for script: " ~ SCRIPT_NAME ~ "</h1>" ~
         "<div class=\"bodydiv\"><p>Start Time: " ~ starttime[0..4] ~ " " ~ starttime[4..6] ~ " " ~ starttime[6..8] ~ " " ~ starttime[8..10] ~ ":" ~ starttime[10..12] ~ ":" ~ starttime[12..14] ~ "</p><p>Player ID: " ~ player ~ "</p>";
+    openingheaderhtml = openingheaderhtml ~ "<p>Notes:<br>* Notes and Note Lines are for the current run<br>* Since each run takes a different amount of time, time intervals on aggregate data may not directly correspond to time intervals on the current run<br>* Aggregate Enabled: " ~ ToString(ENABLE_AGGREGATE) ~ "</p>";
     openingheaderhtml = openingheaderhtml ~ ToString(USER_TEXT) ~ "</div>";
     ObjFileT_AddLine(outputfile, openingheaderhtml);
 
