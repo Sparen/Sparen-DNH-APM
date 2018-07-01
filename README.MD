@@ -33,14 +33,16 @@ Example below:
 }
 ```
 
-At the end of your script (before it closes on regular termination/player death), you will need to notify the APM that it needs to generate its report. To do this, use NotifyEventAll. By default, the APM uses `EV_USER_STAGE + 2048` and will output to `GetCurrentScriptDirectory() ~ "./dnhapm-output/"`.
+At the end of your script (before it closes on regular termination/player death), you will need to notify the APM that it needs to generate its report. To do this, use NotifyEventAll. By default, the APM uses `EV_USER_STAGE + 2048` and will output to `GetCurrentScriptDirectory() ~ "./dnhapm-output/"`. 
+
+**At least four frames of yielding are required between calling the event and closing the stage scene. This is because DNHAPM requires multiple frames to store data and generate the report. For futureproofing in case this value increases, it is recommended that you yield at least 6 frames before closing your stage scene.** If you are running DNHAPM via a Single script that closes itself via `CloseScript(GetOwnScriptID())`, it seems that the APM will continue running until completion, so no yield frames are needed, but it is recommended that you provide them anyways just as a precaution.
 
 Example below:
 ```java
 task StageOver {
     while(!finished && GetPlayerState() != STATE_END){yield;}
     NotifyEventAll(EV_USER_STAGE + 2048, "");
-    loop(60){yield;}
+    loop(60){yield;} // At least four frames are required between calling the event and closing the stage.
     ...
     CloseStgScene();
 }
