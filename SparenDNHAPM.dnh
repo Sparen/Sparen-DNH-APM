@@ -2,7 +2,7 @@
 * Sparen's Danmakufu ph3 Application Monitoring System
 * For use with Touhou Danmakufu ph3
 * (C) Sparen of Iria 2018
-* Version 0.2
+* Version 0.3-pre
 ****************************************************************** */
 
 /* ******************************************************************
@@ -54,6 +54,10 @@ let FEATURE_SHOTCOUNT_ENABLE; // Enable or disable Shot count logging
 let FEATURE_SHOTCOUNT_UPDATEFREQ; // Update frequency, in frames.
 let FEATURE_SHOTCOUNT_LINECOLOR; // Color of the line, in HTML supported color
 
+let FEATURE_BOMBDEATH_ENABLE; // Enable or disable Bomb and Death logging
+let FEATURE_BOMBDEATH_BOMBCOLOR; // Color of the bomb circle, in HTML supported color
+let FEATURE_BOMBDEATH_DEATHCOLOR; // Color of the death circle, in HTML supported color
+
 @Loading {
     if (!IsCommonDataAreaExists("dnhapm")) {
         CreateCommonDataArea("dnhapm");
@@ -91,6 +95,10 @@ let FEATURE_SHOTCOUNT_LINECOLOR; // Color of the line, in HTML supported color
     FEATURE_SHOTCOUNT_UPDATEFREQ = GetAreaCommonData("dnhapm", "ShotCountUpdateFreq", 10);
     FEATURE_SHOTCOUNT_LINECOLOR = GetAreaCommonData("dnhapm", "ShotCountLineColor", "#FFCC55");
 
+    FEATURE_BOMBDEATH_ENABLE = GetAreaCommonData("dnhapm", "BombDeathEnable", true);
+    FEATURE_BOMBDEATH_BOMBCOLOR = GetAreaCommonData("dnhapm", "BombCircleColor", "#44DD44");
+    FEATURE_BOMBDEATH_DEATHCOLOR = GetAreaCommonData("dnhapm", "DeathCircleColor", "#DD44DD");
+
     //Initialize non-event based trackers
     if (FEATURE_FPS_ENABLE) {
         APM_StartFPS;
@@ -116,6 +124,16 @@ let FEATURE_SHOTCOUNT_LINECOLOR; // Color of the line, in HTML supported color
         let arg = GetEventArgument(0); // Number of event, Contents of event
         LogNote(arg[0], arg[1]);
     }
+    case(EV_PLAYER_SPELL) {
+        if (FEATURE_BOMBDEATH_ENABLE) {
+            LogBombDeath("b");
+        }
+    }
+    case(EV_PLAYER_SHOOTDOWN) {
+        if (FEATURE_BOMBDEATH_ENABLE) {
+            LogBombDeath("d");
+        }
+    }
 }
 
 @MainLoop {
@@ -128,7 +146,7 @@ let FEATURE_SHOTCOUNT_LINECOLOR; // Color of the line, in HTML supported color
 /* ============================================================================== */
 // For now, we will store notes per-run and will not save them to disk.
 //let notefile = ObjFile_Create(OBJ_FILE_TEXT);
-//let notefilepath = OUTPUT_DIRECTORY ~ "apmnote-" ~ starttime ~ ".txt";
+//let notefilepath = OUTPUT_DIRECTORY ~ "apmnote-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".txt";
 //ObjFile_OpenNW(notefile, notefilepath);
 let notestring = "";
 
@@ -410,6 +428,115 @@ function APM_ChartGenShotCount {
     return svg;
 }
 
+/* ====================================================================================== */
+/* ================================ Bomb & Death Logging ================================ */
+/* ====================================================================================== */
+let bombdeathfile = ObjFile_Create(OBJ_FILE_TEXT);
+let bombdeathfilepath;
+
+function LogBombDeath(bd) {
+    let newbd = IntToString(elapsedtime) ~ "," ~ bd;
+    bombdeathfilepath = OUTPUT_DIRECTORY ~ "apmbd-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".txt";
+    ObjFile_OpenNW(bombdeathfile, bombdeathfilepath);
+    ObjFileT_AddLine(bombdeathfile, newbd);
+    ObjFile_Store(bombdeathfile);
+}
+
+// Returns the SVG chart for Bomb/Death in its entirety.
+function APM_ChartGenBombDeath {
+    WriteLog("APM_ChartGenBombDeath: Starting.");
+    // First, CLOSE THE EXISTING HANDLE or we will have problems later
+    Obj_Delete(bombdeathfile);
+
+    // Determine max time, and circles to render from the files.
+    let circles = [];
+    // First, we will determine the scale of the x axis and log all of the necessary files.
+    let maxtime = 0; // Will be scaled later
+    let currfilepath = OUTPUT_DIRECTORY ~ "apmbd-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".txt"; // Current run, for later reference
+    let filepathlist = GetFilePathList(OUTPUT_DIRECTORY);
+    ascent(i in 0..length(filepathlist)) {
+        // First, retrieve the file name
+        let filename = parseFileName(filepathlist[i]);
+        let currbd = "";
+        let currtime = 0;
+        //WriteLog("APM_ChartGenBombDeath DEBUG: testing on " ~ filename);
+        // We only read the file if aggregating and a val file, or if it's the file we just set up.
+        if (filename[0..length("apmbd")] == "apmbd" && ENABLE_AGGREGATE || (filepathlist[i] == currfilepath)) {
+            //WriteLog("APM_ChartGenBombDeath DEBUG: running on " ~ filepathlist[i]);
+            let handle = ObjFile_Create(OBJ_FILE_TEXT);
+            let status = ObjFile_Open(handle, filepathlist[i]);
+            while (!status) {
+                WriteLog("APM_ChartGenBombDeath: Reading file " ~ filepathlist[i] ~ " failed.");
+                status = ObjFile_Open(handle, filepathlist[i]);
+                yield;
+            }
+            WriteLog("APM_ChartGenBombDeath: Successfully read file " ~ filepathlist[i] ~ ".");
+
+            ascent(j in 0..ObjFileT_GetLineCount(handle)) { // For every line in the file
+                let line = ObjFileT_GetLineText(handle, j + 1); // Recall that lines are 1-indexed
+                let split = SplitString(line, ","); // Format: time, bomb/death
+                currtime = ator(split[0]);
+                currbd = split[1];
+
+                if (currtime > maxtime) {maxtime = currtime;} // Update max time if the time for any data point is greater than the current max
+
+                // Generate circles. Using opacity of 1 regardless of aggregation settings since past runs seperated physically.
+                // Radius is 8 for current run, 1.5 for past runs. Text only for current run; past runs offset by 32 pixels.
+                let basex = 64;
+                let nodex = basex + currtime/60 * GRAPH_SCALE;
+                let nodey = 64;
+                let radius = 8;
+                let circcolor = FEATURE_BOMBDEATH_DEATHCOLOR;
+                // If Bomb rather than Death
+                if (currbd == "b") {
+                    nodey = 192; 
+                    circcolor = FEATURE_BOMBDEATH_BOMBCOLOR;
+                }
+                // If different run (aggregate)
+                if (filepathlist[i] != currfilepath) {
+                    //WriteLog("APM_ChartGenBombDeath DEBUG: Aggregate Check: " ~ filepathlist[i] ~ " != " ~ currfilepath);
+                    nodey += 32;
+                    radius = 1.5;
+                }
+                let circtext = "<text x=\"" ~ ToString(nodex) ~ "\" y=\"" ~ ToString(nodey) ~ "\" font-family=\"Andale Mono, Monospace\" font-size=\"9px\" fill=\"#FFFFFF\" text-anchor=\"middle\" dominant-baseline=\"central\">" ~ currbd ~ "</text>";
+                let newcirc = "<circle r=\"" ~ ToString(radius) ~ "\" cx=\"" ~ ToString(nodex) ~ "\" cy=\"" ~ ToString(nodey) ~ "\" stroke=\"none\" fill=\"" ~ circcolor ~ "\"></circle>";
+                circles = circles ~ [newcirc];
+                if (filepathlist[i] == currfilepath) {
+                    circles = circles ~ [circtext];
+                }
+            }
+            Obj_Delete(handle);
+        }
+    }
+    // Chart Basics 
+    let svg = "<div class=\"bodydiv\">" ~ SVGChartGen(maxtime/60);
+    // Notes
+    svg = svg ~ NotesToSVG;
+    // X Axis Labels
+    svg = svg ~ SVGXAxisGen(maxtime/60);
+    // Custom Y Axis Labels
+    svg = svg ~ "<path d=\"M 60 64 H 66\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
+    svg = svg ~ "<text x=\"54\" y=\"64\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"end\" dominant-baseline=\"central\">Deaths</text>";
+    svg = svg ~ "<path d=\"M 60 192 H 66\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
+    svg = svg ~ "<text x=\"54\" y=\"192\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"end\" dominant-baseline=\"central\">Bombs</text>";
+    if (ENABLE_AGGREGATE) {
+        svg = svg ~ "<path d=\"M 60 96 H 66\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
+        svg = svg ~ "<text x=\"54\" y=\"91\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"end\" dominant-baseline=\"central\">Deaths</text>";
+        svg = svg ~ "<text x=\"54\" y=\"101\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"end\" dominant-baseline=\"central\">(Past)</text>";
+        svg = svg ~ "<path d=\"M 60 224 H 66\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\"></path>";
+        svg = svg ~ "<text x=\"54\" y=\"219\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"end\" dominant-baseline=\"central\">Bombs</text>";
+        svg = svg ~ "<text x=\"54\" y=\"229\" font-family=\"Andale Mono, Monospace\" font-size=\"10px\" fill=\"#222222\" text-anchor=\"end\" dominant-baseline=\"central\">(Past)</text>";
+    }
+    // Add circles
+    ascent(i in 0..length(circles)) {
+        svg = svg ~ circles[i];
+    }
+    // Close SVG
+    svg = svg ~ "</svg>"; 
+    svg = svg ~ "<p>Please note that deathbombs are considered 'bombs' and not 'deaths' due to EV_PLAYER_SHOOTDOWN trigger requirements.</p></div>";  
+    return svg;
+}
+
 /* =================================================================================== */
 /* ================================ Report Generation ================================ */
 /* =================================================================================== */
@@ -430,8 +557,8 @@ function APM_ChartGenCommon(apmtype, updfreq, linecolor) {
         let filename = parseFileName(filepathlist[i]);
         //WriteLog("APM_ChartGenScore DEBUG: testing on " ~ filename);
         // We only read the file if aggregating and a val file, or if it's the file we just set up.
-        if (filename[0..length(apmtype)] == apmtype && ENABLE_AGGREGATE || (filename == currfilepath)) {
-            //WriteLog("APM_ChartGenScore DEBUG: running on " ~ filename);
+        if (filename[0..length(apmtype)] == apmtype && ENABLE_AGGREGATE || (filepathlist[i] == currfilepath)) {
+            //WriteLog("APM_ChartGenScore DEBUG: running on " ~ filepathlist[i]);
             // See if this one sets a new maxval
             let filedatapoints = CSVtoArray(filepathlist[i]);
             let filemaxval = maxarr(filedatapoints);
@@ -572,6 +699,7 @@ task GenerateReport() {
     if (FEATURE_GRAZE_ENABLE) {ObjFileT_AddLine(outputfile, "<li><a href=\"#header_graze\">Graze Monitoring</a></li>");}
     if (FEATURE_SCORE_ENABLE) {ObjFileT_AddLine(outputfile, "<li><a href=\"#header_score\">Score Monitoring</a></li>");}
     if (FEATURE_SHOTCOUNT_ENABLE) {ObjFileT_AddLine(outputfile, "<li><a href=\"#header_shotcount\">Enemy Shot Count Monitoring</a></li>");}
+    if (FEATURE_BOMBDEATH_ENABLE) {ObjFileT_AddLine(outputfile, "<li><a href=\"#header_bombdeath\">Bomb & Death Monitoring</a></li>");}
     ObjFileT_AddLine(outputfile, "</ul></div>");
 
     if (FEATURE_FPS_ENABLE) {
@@ -596,6 +724,11 @@ task GenerateReport() {
         while (!finished_shotcount) {yield;} //Wait for file to be written before reading
         ObjFileT_AddLine(outputfile, "<h3 class=\"header\" id=\"header_shotcount\">Enemy Shot Count Monitoring</h3>");
         ObjFileT_AddLine(outputfile, APM_ChartGenShotCount);
+    }
+
+    if (FEATURE_BOMBDEATH_ENABLE) {
+        ObjFileT_AddLine(outputfile, "<h3 class=\"header\" id=\"header_bombdeath\">Bomb & Death Monitoring</h3>");
+        ObjFileT_AddLine(outputfile, APM_ChartGenBombDeath);
     }
 
     // ---------------  End Reporting  ---------------
