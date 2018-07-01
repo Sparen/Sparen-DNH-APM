@@ -41,7 +41,7 @@ At the end of your script (before it closes on regular termination/player death)
 
 **At least four frames of yielding are required between calling the event and closing the stage scene. This is because DNHAPM requires multiple frames to store data and generate the report. For futureproofing in case this value increases, it is recommended that you yield at least 6 frames before closing your stage scene.** If you are running DNHAPM via a Single script that closes itself via `CloseScript(GetOwnScriptID())`, it seems that the APM will continue running until completion, so no yield frames are needed, but it is recommended that you provide them anyways just as a precaution.
 
-In addition, note that you can only write a report ONCE per run of a script. This is because when the event to generate the report is called, all logging tasks stop logging and write to file. These tasks are not restarted afterwards, meaning that if you were to call the event more than one time in a single script, later calls would overwrite the original report with the contents of the original report, since no new data has been logged.
+In addition, note that you can only write a report ONCE per run of a script. This is because when the event to generate the report is called, all logging tasks stop logging and write to file. These tasks are not restarted afterwards, meaning that if you were to call the event more than one time in a single script, later calls would overwrite the original report with the contents of the original report (i.e. no change), since no new data has been logged.
 
 Example usage of the event call to trigger report generation below:
 ```java
@@ -60,7 +60,7 @@ Modified CSV files as well as HTML files will be generated in the target directo
 
 This script works when saves as part of a replay, but replays made before the profiler was implemented will desync when run after the profiler has been added.
 
-Typically, DNHAPM only needs to run in one script. If you wish to transition to a production or release environment after using the APM, all you need to do is block comment out the setup in `@Loading`, as the only other code needed to run DNHAMP will be Event calls in other scripts, which have minimal overhead.
+Typically, DNHAPM only needs to run in one script. If you wish to transition to a production or release environment after using the APM, all you need to do is block comment out the setup in `@Loading`, as the only other code needed to run DNHAPM will be Event calls in other scripts, which have minimal overhead.
 
 For usage examples, refer to `test/*`.
 
