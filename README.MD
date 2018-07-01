@@ -6,6 +6,8 @@ This software is capable of profiling a single run of a script and monitoring be
 
 # Usage
 
+### Setup - @Loading
+
 To use the APM, you will first need to find a Stage Script (or Plural or Single) to monitor or profile.
 
 In `@Loading` for the script of your choice, do the following:
@@ -33,11 +35,15 @@ Example below:
 }
 ```
 
+### Setup - Report Generation
+
 At the end of your script (before it closes on regular termination/player death), you will need to notify the APM that it needs to generate its report. To do this, use NotifyEventAll. By default, the APM uses `EV_USER_STAGE + 2048` and will output to `GetCurrentScriptDirectory() ~ "./dnhapm-output/"`. 
 
 **At least four frames of yielding are required between calling the event and closing the stage scene. This is because DNHAPM requires multiple frames to store data and generate the report. For futureproofing in case this value increases, it is recommended that you yield at least 6 frames before closing your stage scene.** If you are running DNHAPM via a Single script that closes itself via `CloseScript(GetOwnScriptID())`, it seems that the APM will continue running until completion, so no yield frames are needed, but it is recommended that you provide them anyways just as a precaution.
 
-Example below:
+In addition, note that you can only write a report ONCE per run of a script. This is because when the event to generate the report is called, all logging tasks stop logging and write to file. These tasks are not restarted afterwards, meaning that if you were to call the event more than one time in a single script, later calls would overwrite the original report with the contents of the original report, since no new data has been logged.
+
+Example usage of the event call to trigger report generation below:
 ```java
 task StageOver {
     while(!finished && GetPlayerState() != STATE_END){yield;}
@@ -49,6 +55,8 @@ task StageOver {
 ```
 
 Modified CSV files as well as HTML files will be generated in the target directory. The CSV files, if kept, will allow for successive runs of the APM to log past data should aggregation be enabled. The HTML files contain the reports.
+
+### Usage - Other Notes
 
 This script works when saves as part of a replay, but replays made before the profiler was implemented will desync when run after the profiler has been added.
 
