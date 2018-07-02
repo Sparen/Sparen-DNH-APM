@@ -92,7 +92,7 @@ This section will be populated with data as new features are implemented.
 
 ### FPS Monitoring
 <p align="center">
-    <img src="./sample-metric/fpsexample.png">
+    <img src="./sample-metric/fpsexample.png" height="512">
     <i>Sample FPS graph, showing lag spikes at plural loading and spellcard declaration</i>
 </p>
 
@@ -195,7 +195,7 @@ By default, all notes have a line dropped down from the x axis to their height f
 
 ### Steps
 <p align="center">
-    <img src="./sample-metric/stepexample.png">
+    <img src="./sample-metric/stepexample.png" height="512">
     <i>Sample graph with default Step Logging settings, showing combined usage of Notes and Step Logging</i>
 </p>
 
