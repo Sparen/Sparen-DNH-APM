@@ -92,7 +92,7 @@ This section will be populated with data as new features are implemented.
 
 ### FPS Monitoring
 <p align="center">
-    <img src="./sample-metric/fpsexample.png" height="512">
+    <img src="./sample-metric/fpsexample.png" height="384">
     <br>
     <i>Sample FPS graph, showing lag spikes at plural loading and spellcard declaration</i>
 </p>
