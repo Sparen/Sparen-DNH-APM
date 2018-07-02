@@ -200,11 +200,14 @@ Step Logging comes with configuration settings like all of the other options.
 
 ```
 ENABLE_STEP = GetAreaCommonData("dnhapm", "EnableStep", true);
-STEP_NONSPELLCOLOR = GetAreaCommonData("dnhapm", "StepNonspellColor", "#CCCCCC");
+STEP_NONSPELLCOLOR = GetAreaCommonData("dnhapm", "StepNonspellColor", "#CACACA");
 STEP_SPELLCOLOR = GetAreaCommonData("dnhapm", "StepSpellColor", "#DDBBDD");
+ENABLE_STEP_LINE = GetAreaCommonData("dnhapm", "EnableStepLine", true);
 ```
 
-First is the field for enabling and disabling the feature. After this come two color fields - one for the background color of nonspell blocks (defaults to #CCCCCC) and the other for spell blocks (defaults to #DDBBDD). Note that the blocks are rendered with opacity 0.1, so the colors will appear faint, but hopefully visibly enough that nonspell and spell steps can be distinguished from each other as well as portions outside of boss battles.
+First is the field for enabling and disabling the feature. After this come two color fields - one for the background color of nonspell blocks (defaults to #CACACA) and the other for spell blocks (defaults to #DDBBDD). Note that the blocks are rendered with opacity 0.1, so the colors will appear faint, but hopefully visibly enough that nonspell and spell steps can be distinguished from each other as well as portions outside of boss battles.
+
+Finally, there is an option to enable/disable a line at the top of each step block. This line is in the specified color and can be used for clearer determination between different steps.
 
 # Current and Planned Features
 

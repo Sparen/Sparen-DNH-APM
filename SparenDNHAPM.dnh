@@ -40,6 +40,7 @@ let ENABLE_NOTE_LINE; // Whether or not to render a line up through the graph at
 let ENABLE_STEP; // Whether or not to log steps
 let STEP_NONSPELLCOLOR; // Color for nonspells when using step logging
 let STEP_SPELLCOLOR; // Color for nonspells when using step logging
+let ENABLE_STEP_LINE; // Whether or not to render line at top of graph for step.
 
 // Feature Set Customization
 let FEATURE_FPS_ENABLE; // Enable or disable FPS logging
@@ -87,8 +88,9 @@ let FEATURE_BOMBDEATH_TEXTSIZE; // Radius of the bullet text size, in pixels
     ENABLE_NOTE_LINE = GetAreaCommonData("dnhapm", "EnableNoteLine", true);
 
     ENABLE_STEP = GetAreaCommonData("dnhapm", "EnableStep", true);
-    STEP_NONSPELLCOLOR = GetAreaCommonData("dnhapm", "StepNonspellColor", "#CCCCCC");
+    STEP_NONSPELLCOLOR = GetAreaCommonData("dnhapm", "StepNonspellColor", "#CACACA");
     STEP_SPELLCOLOR = GetAreaCommonData("dnhapm", "StepSpellColor", "#DDBBDD");
+    ENABLE_STEP_LINE = GetAreaCommonData("dnhapm", "EnableStepLine", true);
 
     FEATURE_FPS_ENABLE = GetAreaCommonData("dnhapm", "FPSEnable", true);
     FEATURE_FPS_UPDATEFREQ = GetAreaCommonData("dnhapm", "FPSUpdateFreq", 10);
@@ -261,7 +263,11 @@ function StepsToSVG {
                     blockcolor = STEP_SPELLCOLOR;
                 }
                 let stepblock = "<rect x=\"" ~ ToString(stepleft) ~ "\" y=\"0\" height=\"304\" width=\"" ~ ToString(stepright - stepleft) ~ "\" fill=\"" ~ blockcolor ~ "\" opacity=\"0.1\"></rect>";
+                let stepline = "<path d=\"M " ~ ToString(stepleft) ~ " 0 H " ~ ToString(stepright) ~ "\" stroke=\"" ~ blockcolor ~ "\" stroke-width=\"2\" fill=\"none\"></path>";
                 svg = svg ~ stepblock;
+                if (ENABLE_STEP_LINE) {
+                    svg = svg ~ stepline;
+                }
                 onspell = false;
             }
         }
