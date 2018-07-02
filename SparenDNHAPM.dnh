@@ -61,6 +61,9 @@ let FEATURE_SHOTCOUNT_LINECOLOR; // Color of the line, in HTML supported color
 let FEATURE_BOMBDEATH_ENABLE; // Enable or disable Bomb and Death logging
 let FEATURE_BOMBDEATH_BOMBCOLOR; // Color of the bomb circle, in HTML supported color
 let FEATURE_BOMBDEATH_DEATHCOLOR; // Color of the death circle, in HTML supported color
+let FEATURE_BOMBDEATH_MAINBULLETSIZE; // Radius of the main bullet (current run), in pixels
+let FEATURE_BOMBDEATH_SUBBULLETSIZE; // Radius of the aggregate bullets, in pixels
+let FEATURE_BOMBDEATH_TEXTSIZE; // Radius of the bullet text size, in pixels
 
 @Loading {
     if (!IsCommonDataAreaExists("dnhapm")) {
@@ -106,6 +109,9 @@ let FEATURE_BOMBDEATH_DEATHCOLOR; // Color of the death circle, in HTML supporte
     FEATURE_BOMBDEATH_ENABLE = GetAreaCommonData("dnhapm", "BombDeathEnable", true);
     FEATURE_BOMBDEATH_BOMBCOLOR = GetAreaCommonData("dnhapm", "BombCircleColor", "#44DD44");
     FEATURE_BOMBDEATH_DEATHCOLOR = GetAreaCommonData("dnhapm", "DeathCircleColor", "#DD44DD");
+    FEATURE_BOMBDEATH_MAINBULLETSIZE = GetAreaCommonData("dnhapm", "BDMainBulletSize", 8);
+    FEATURE_BOMBDEATH_SUBBULLETSIZE = GetAreaCommonData("dnhapm", "BDSubBulletSize", 2);
+    FEATURE_BOMBDEATH_TEXTSIZE = GetAreaCommonData("dnhapm", "BDBulletTextSize", 9);
 
     //Initialize non-event based trackers
     if (FEATURE_FPS_ENABLE) {
@@ -564,7 +570,7 @@ function APM_ChartGenBombDeath {
                 let basex = 64;
                 let nodex = basex + currtime/60 * GRAPH_SCALE;
                 let nodey = 64;
-                let radius = 8;
+                let radius = FEATURE_BOMBDEATH_MAINBULLETSIZE;
                 let circcolor = FEATURE_BOMBDEATH_DEATHCOLOR;
                 // If Bomb rather than Death
                 if (currbd == "b") {
@@ -575,9 +581,9 @@ function APM_ChartGenBombDeath {
                 if (filepathlist[i] != currfilepath) {
                     //WriteLog("APM_ChartGenBombDeath DEBUG: Aggregate Check: " ~ filepathlist[i] ~ " != " ~ currfilepath);
                     nodey += 32;
-                    radius = 2;
+                    radius = FEATURE_BOMBDEATH_SUBBULLETSIZE;
                 }
-                let circtext = "<text x=\"" ~ ToString(nodex) ~ "\" y=\"" ~ ToString(nodey) ~ "\" font-family=\"Andale Mono, Monospace\" font-size=\"9px\" fill=\"#FFFFFF\" text-anchor=\"middle\" dominant-baseline=\"central\">" ~ currbd ~ "</text>";
+                let circtext = "<text x=\"" ~ ToString(nodex) ~ "\" y=\"" ~ ToString(nodey) ~ "\" font-family=\"Andale Mono, Monospace\" font-size=\"" ~ IntToString(FEATURE_BOMBDEATH_TEXTSIZE) ~ "px\" fill=\"#FFFFFF\" text-anchor=\"middle\" dominant-baseline=\"central\">" ~ currbd ~ "</text>";
                 let newcirc = "<circle r=\"" ~ ToString(radius) ~ "\" cx=\"" ~ ToString(nodex) ~ "\" cy=\"" ~ ToString(nodey) ~ "\" stroke=\"none\" fill=\"" ~ circcolor ~ "\"></circle>";
                 circles = circles ~ [newcirc];
                 if (filepathlist[i] == currfilepath) {
