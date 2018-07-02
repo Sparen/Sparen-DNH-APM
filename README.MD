@@ -194,6 +194,11 @@ When using the note system, please be careful of text length. If your graph scal
 By default, all notes have a line dropped down from the x axis to their height for easy identification. The ENABLE_NOTE_LINE field adds another line up from the x axis to the top of the graph (in a lighter tone) for easier distinction where a note was placed. Depending on how you use the APM's notes, this may allow you to chunk the graph into 'phases' for easier analysis.
 
 ### Steps
+<p align="center">
+    <img src="./sample-metric/stepexample.png">
+    <i>Sample graph with default Step Logging settings, showing combined usage of Notes and Step Logging</i>
+</p>
+
 The APM also has the capability to log steps in Plural Scripts via `EV_START_BOSS_STEP`, `EV_END_BOSS_STEP`, and `EV_START_BOSS_SPELL`. Like with notes, these are per-run and only reflect the last run of the script. Together with notes, it becomes possible to see which attacks started at what time and how long they lasted. 
 
 Step Logging comes with configuration settings like all of the other options.
