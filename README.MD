@@ -198,7 +198,7 @@ The APM also has the capability to log steps in Plural Scripts via `EV_START_BOS
 
 Step Logging comes with configuration settings like all of the other options.
 
-```
+```java
 ENABLE_STEP = GetAreaCommonData("dnhapm", "EnableStep", true);
 STEP_NONSPELLCOLOR = GetAreaCommonData("dnhapm", "StepNonspellColor", "#CACACA");
 STEP_SPELLCOLOR = GetAreaCommonData("dnhapm", "StepSpellColor", "#DDBBDD");
