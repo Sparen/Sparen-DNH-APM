@@ -2,7 +2,7 @@
 * Sparen's Danmakufu ph3 Application Monitoring System
 * For use with Touhou Danmakufu ph3
 * (C) Sparen of Iria 2018
-* Version 0.3
+* Version 0.4-pre
 ****************************************************************** */
 
 /* ******************************************************************
@@ -36,6 +36,10 @@ let USER_TEXT; // User defined text
 let USER_NOTE_SLOTS; // Number of User Note slots to use
 let EVENT_USER_NOTE; // Event to call via NotifyEvent/NotifyEventAll when the user wishes to log a note
 let ENABLE_NOTE_LINE; // Whether or not to render a line up through the graph at a note
+
+let ENABLE_STEP; // Whether or not to log steps
+let STEP_NONSPELLCOLOR; // Color for nonspells when using step logging
+let STEP_SPELLCOLOR; // Color for nonspells when using step logging
 
 // Feature Set Customization
 let FEATURE_FPS_ENABLE; // Enable or disable FPS logging
@@ -78,6 +82,10 @@ let FEATURE_BOMBDEATH_DEATHCOLOR; // Color of the death circle, in HTML supporte
     USER_NOTE_SLOTS = GetAreaCommonData("dnhapm", "UserNoteSlots", 2);
     EVENT_USER_NOTE = GetAreaCommonData("dnhapm", "UserNoteEvent", EV_USER_STAGE + 2050);
     ENABLE_NOTE_LINE = GetAreaCommonData("dnhapm", "EnableNoteLine", true);
+
+    ENABLE_STEP = GetAreaCommonData("dnhapm", "EnableStep", true);
+    STEP_NONSPELLCOLOR = GetAreaCommonData("dnhapm", "StepNonspellColor", "#CCCCCC");
+    STEP_SPELLCOLOR = GetAreaCommonData("dnhapm", "StepSpellColor", "#DDBBDD");
 
     FEATURE_FPS_ENABLE = GetAreaCommonData("dnhapm", "FPSEnable", true);
     FEATURE_FPS_UPDATEFREQ = GetAreaCommonData("dnhapm", "FPSUpdateFreq", 10);
@@ -134,6 +142,21 @@ let FEATURE_BOMBDEATH_DEATHCOLOR; // Color of the death circle, in HTML supporte
             LogBombDeath("d");
         }
     }
+    case(EV_START_BOSS_STEP) {
+        if (ENABLE_STEP) {
+            LogStep("s");
+        }
+    }
+    case(EV_END_BOSS_STEP) {
+        if (ENABLE_STEP) {
+            LogStep("e");
+        }
+    }
+    case(EV_START_BOSS_SPELL) {
+        if (ENABLE_STEP) {
+            LogStep("sp");
+        }
+    }
 }
 
 @MainLoop {
@@ -173,7 +196,7 @@ function NotesToSVG {
             let notepath2 = "";
             // If the note line is enabled, add another path upwards.
             if (ENABLE_NOTE_LINE) {
-                notepath2 = "<path d=\"M " ~ ToString(notex) ~ " 304 V 0\" stroke=\"#EEEEEE\" stroke-width=\"1\" fill=\"none\"></path>";
+                notepath2 = "<path d=\"M " ~ ToString(notex) ~ " 304 V 0\" stroke=\"#DDDDDD\" stroke-width=\"1\" fill=\"none\"></path>";
             }
             svg = svg ~ notepath ~ notepath2;
         }
@@ -187,6 +210,54 @@ function NotesToSVG {
             notetext = notetext ~ note[2];
             notetext = notetext ~ "</text>";
             svg = svg ~ notetext;
+        }
+    }
+    return svg;
+}
+
+/* ============================================================================== */
+/* ================================ Step Logging ================================ */
+/* ============================================================================== */
+// For now, we will store steps per-run and will not save them to disk.
+//let stepfile = ObjFile_Create(OBJ_FILE_TEXT);
+//let stepfilepath = OUTPUT_DIRECTORY ~ "apmstep-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".txt";
+//ObjFile_OpenNW(stepfile, stepfilepath);
+let stepstring = "";
+
+function LogStep(str) {
+    let newstep = IntToString(elapsedtime) ~ "," ~ str;
+    //ObjFileT_AddLine(stepfile, newstep);
+    //ObjFile_Store(stepfile);
+    stepstring = stepstring ~ newstep ~ "|";
+}
+
+// Takes the steps and generates SVG paths and text for them.
+function StepsToSVG {
+    WriteLog("StepsToSVG: Writing with: " ~ stepstring);
+    let svg = "";
+    // Parse step by new line, then by comma.
+    let steps = SplitString(stepstring, "|");
+    let stepleft = 64; // Left bound of rect
+    let stepright = 64; // Right bound of rect
+    let onspell = false;
+    ascent(i in 0..length(steps)) {
+        if (steps[i] != "") {
+            let step = SplitString(steps[i], ",");
+            if (step[1] == "s") {
+                stepleft = 64 + atoi(step[0]) * GRAPH_SCALE/60;
+            } else if (step[1] == "sp") {
+                onspell = true;
+            } else if (step[1] == "e") {
+                stepright = 64 + atoi(step[0]) * GRAPH_SCALE/60;
+                // We only add a new block if we see the End event.
+                let blockcolor = STEP_NONSPELLCOLOR;
+                if (onspell) {
+                    blockcolor = STEP_SPELLCOLOR;
+                }
+                let stepblock = "<rect x=\"" ~ ToString(stepleft) ~ "\" y=\"0\" height=\"304\" width=\"" ~ ToString(stepright - stepleft) ~ "\" fill=\"" ~ blockcolor ~ "\" opacity=\"0.1\"></rect>";
+                svg = svg ~ stepblock;
+                onspell = false;
+            }
         }
     }
     return svg;
@@ -234,6 +305,8 @@ function APM_ChartGenFPS {
     let paths = GetAreaCommonData("dnhapm", "cgcpath_apmfps", []);
     // Chart Basics 
     let svg = "<div class=\"bodydiv\">" ~ SVGChartGen(maxtime * FEATURE_FPS_UPDATEFREQ/60);
+    // Steps
+    if (ENABLE_STEP) {svg = svg ~ StepsToSVG;}
     // Notes
     svg = svg ~ NotesToSVG;
     // X Axis Labels
@@ -293,6 +366,8 @@ function APM_ChartGenGraze {
     let paths = GetAreaCommonData("dnhapm", "cgcpath_apmgraze", []);
     // Chart Basics 
     let svg = "<div class=\"bodydiv\">" ~ SVGChartGen(maxtime * FEATURE_GRAZE_UPDATEFREQ/60);
+    // Steps
+    if (ENABLE_STEP) {svg = svg ~ StepsToSVG;}
     // Notes
     svg = svg ~ NotesToSVG;
     // X Axis Labels
@@ -352,6 +427,8 @@ function APM_ChartGenScore {
     let paths = GetAreaCommonData("dnhapm", "cgcpath_apmscore", []);
     // Chart Basics 
     let svg = "<div class=\"bodydiv\">" ~ SVGChartGen(maxtime * FEATURE_SCORE_UPDATEFREQ/60);
+    // Steps
+    if (ENABLE_STEP) {svg = svg ~ StepsToSVG;}
     // Notes
     svg = svg ~ NotesToSVG;
     // X Axis Labels
@@ -411,6 +488,8 @@ function APM_ChartGenShotCount {
     let paths = GetAreaCommonData("dnhapm", "cgcpath_apmscount", []);
     // Chart Basics 
     let svg = "<div class=\"bodydiv\">" ~ SVGChartGen(maxtime * FEATURE_SHOTCOUNT_UPDATEFREQ/60);
+    // Steps
+    if (ENABLE_STEP) {svg = svg ~ StepsToSVG;}
     // Notes
     svg = svg ~ NotesToSVG;
     // X Axis Labels
@@ -510,6 +589,8 @@ function APM_ChartGenBombDeath {
     }
     // Chart Basics 
     let svg = "<div class=\"bodydiv\">" ~ SVGChartGen(maxtime/60);
+    // Steps
+    if (ENABLE_STEP) {svg = svg ~ StepsToSVG;}
     // Notes
     svg = svg ~ NotesToSVG;
     // X Axis Labels
