@@ -58,7 +58,7 @@ Modified CSV files as well as HTML files will be generated in the target directo
 
 ### Usage - Other Notes
 
-This script works when saves as part of a replay, but replays made before the profiler was implemented will desync when run after the profiler has been added.
+This script works when saved as part of a replay, but replays made before the profiler was implemented will desync when run after the profiler has been added.
 
 Typically, DNHAPM only needs to run in one script. If you wish to transition to a production or release environment after using the APM, all you need to do is block comment out the setup in `@Loading`, as the only other code needed to run DNHAPM will be Event calls in other scripts, which have minimal overhead.
 
