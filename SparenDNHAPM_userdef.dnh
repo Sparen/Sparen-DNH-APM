@@ -1,0 +1,112 @@
+/* ******************************************************************
+* Sparen's Danmakufu ph3 Application Monitoring System - User Defined Metrics
+* For use with Touhou Danmakufu ph3
+* (C) Sparen of Iria 2018
+****************************************************************** */
+
+/* ******************************************************************
+* This is an #include file for DNHAPM that specifies user-defined logging.
+****************************************************************** */
+
+/* ******************************************************************
+* Variables defined in SparenDNHAPM that can be used (READ ONLY) here:
+* currdir (current directory)
+* starttime (start time for APM Script)
+* player (player ID)
+* elapsedtime (number of frames elapsed)
+* finished (whether or not logging is still occurring)
+****************************************************************** */
+
+/* ******************************************************************
+* General Usage:
+* First, define your constant variables (e.g. FEATURE_USER_POWER_UPDATEFREQ)
+* Next, copy/adapt the existing APM_Start* and APM_ChartGen* tasks
+* You will want to change the field being written to file in APM_Start* (in this example, it is GetPlayerX())
+* You will also want to ensure that these two tasks are using your update frequency/line color fields
+* Finally, the path portion (apmYFH by default) should be changed in both (should be consistent before the hyphen)
+* After this, make sure that you have filled in the APM_LogUserFieldToTOC and APM_LogDataToFile functions to call your custom ones.
+****************************************************************** */
+
+// DNHAPM USER DEF: Define your user fields here
+let FEATURE_USER_FIELDNAME_UPDATEFREQ = 10; // Active monitoring (writing to file every x frames) must have an update frequency in frames
+let FEATURE_USER_FIELDNAME_LINECOLOR = "#0000FF"; // Line color for line graphs must be in HTML supported format - Hex, predefined name, or rgb
+
+function APM_StartUserLogging {
+    // DNHAPM USER DEF: Call all of your logging tasks here
+    // DNHAPM USER DEF: These are the tasks that handle the logging to file
+    //APM_StartYOURFIELDHERE;
+}
+
+function APM_LogUserFieldToTOC(outputfile) {
+    // DNHAPM USER DEF: Add your custom graphs to the table of contents
+    // DNHAPM USER DEF: Make sure that the header names match up
+    //ObjFileT_AddLine(outputfile, "<li><a href=\"#header_userfield1\">YOUR FIELD HERE Monitoring</a></li>");
+}
+
+function APM_LogDataToFile(outputfile) {
+    // DNHAPM USER DEF: Here data is logged to file. Ensure that you add the h3 (id should match up with the one in the Table of Contents)
+    // DNHAPM USER DEF: You also need to call the ChartGen task for your specific tracking field
+    //ObjFileT_AddLine(outputfile, "<h3 class=\"header\" id=\"header_userfield1\">YOUR FIELD HERE Monitoring</h3>");
+    //ObjFileT_AddLine(outputfile, APM_ChartGenYOURFIELDHERE);
+}
+
+/* ========================================================================================= */
+/* ================================ YOUR FIELD HERE Logging ================================ */
+/* ========================================================================================= */
+task APM_StartYOURFIELDHERE {
+    // Create output file
+    let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
+    let outputfilepath = OUTPUT_DIRECTORY ~ "apmYFH-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".csv"; // DNHAPM USER DEF: YFH should correspond to your field name
+    ObjFile_OpenNW(outputfile, outputfilepath);
+    let csvlog = ""; // CSV log
+    let counter = 0;
+    while(!finished) {
+        let cuserfield = GetPlayerX(); // DNHAPM USER DEF: Your 'get' method goes here (will likely be CommonData based)
+        csvlog = csvlog ~ vtos("1.2f", cuserfield) ~ ",";
+        // If csvlog is getting too long, push it to the File Object
+        if (counter % 128 == 0) {
+            ObjFileT_AddLine(outputfile, csvlog);
+            csvlog = "";
+        }
+        counter += 1;
+        loop(FEATURE_USER_FIELDNAME_UPDATEFREQ){yield;}
+    }
+    // Flush to file
+    ObjFileT_AddLine(outputfile, csvlog);
+    ObjFile_Store(outputfile);
+    WriteLog("APM_StartYOURFIELDHERE: Wrote CSV to " ~ outputfilepath);
+    Obj_Delete(outputfile);
+    // yield once before marking as complete
+    yield;
+    finished_fps = true;
+    WriteLog("APM_StartYOURFIELDHEREDEBUG: Finished");
+}
+
+// Returns the SVG chart for YOURFIELDHERE in its entirety.
+function APM_ChartGenYOURFIELDHERE {
+    WriteLog("APM_ChartGenYOURFIELDHERE: Starting.");
+    // Determine max value of interest, max time, and paths to render from the files.
+    let cgcommon = APM_ChartGenCommon("apmYFH", FEATURE_USER_FIELDNAME_UPDATEFREQ, FEATURE_USER_FIELDNAME_LINECOLOR); // DNHAPM USER DEF: YFH should correspond to your field name
+    let maxvalue = cgcommon[0];
+    let maxtime = cgcommon[1];
+    let paths = GetAreaCommonData("dnhapm", "cgcpath_apmYFH", []); // DNHAPM USER DEF: YFH should correspond to your field name
+    // Chart Basics 
+    let svg = "<div class=\"bodydiv\">" ~ SVGChartGen(maxtime * FEATURE_USER_FIELDNAME_UPDATEFREQ/60);
+    // Steps
+    if (ENABLE_STEP) {svg = svg ~ StepsToSVG;}
+    // Notes
+    svg = svg ~ NotesToSVG;
+    // X Axis Labels
+    svg = svg ~ SVGXAxisGen(maxtime * FEATURE_USER_FIELDNAME_UPDATEFREQ/60);
+    // Y Axis Labels
+    svg = svg ~ SVGYAxisGen(maxvalue, ""); // DNHAPM USER DEF: If you want the y axis to have labels (e.g. FPS), note so in the second parameter.
+    // Add paths
+    ascent(i in 0..length(paths)) {
+        svg = svg ~ paths[i];
+    }
+    // Close SVG
+    svg = svg ~ "</svg>";
+    svg = svg ~ "<p>Logged a maximum of " ~ IntToString(maxtime) ~ " data points spanning " ~ ToString(maxtime * FEATURE_USER_FIELDNAME_UPDATEFREQ/60) ~ " seconds.</p>";
+    svg = svg ~ "<p>Logged a maximum YOURFIELDHERE of " ~ IntToString(maxvalue) ~ ".</p></div>"; // DNHAPM USER DEF: Format the string as you want to
+    return svg;
+}

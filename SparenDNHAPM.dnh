@@ -2,7 +2,7 @@
 * Sparen's Danmakufu ph3 Application Monitoring System
 * For use with Touhou Danmakufu ph3
 * (C) Sparen of Iria 2018
-* Version 0.4
+* Version 0.5-pre
 ****************************************************************** */
 
 /* ******************************************************************
@@ -10,6 +10,8 @@
 * lower. Set up this system in @Loading of your preferred script
 * using LoadScript(), SetCommonData(), and StartScript().
 ****************************************************************** */
+
+#include "./SparenDNHAPM_userdef.dnh"
 
 // Global Variables used regardless of which tracking mechanisms are enabled
 let currdir = GetCurrentScriptDirectory();
@@ -128,6 +130,7 @@ let FEATURE_BOMBDEATH_TEXTSIZE; // Radius of the bullet text size, in pixels
     if (FEATURE_SHOTCOUNT_ENABLE) {
         APM_StartShotCount;
     }
+    APM_StartUserLogging;
 }
 
 // We must catch all notable events.
@@ -794,6 +797,7 @@ task GenerateReport() {
     if (FEATURE_SCORE_ENABLE) {ObjFileT_AddLine(outputfile, "<li><a href=\"#header_score\">Score Monitoring</a></li>");}
     if (FEATURE_SHOTCOUNT_ENABLE) {ObjFileT_AddLine(outputfile, "<li><a href=\"#header_shotcount\">Enemy Shot Count Monitoring</a></li>");}
     if (FEATURE_BOMBDEATH_ENABLE) {ObjFileT_AddLine(outputfile, "<li><a href=\"#header_bombdeath\">Bomb & Death Monitoring</a></li>");}
+    APM_LogUserFieldToTOC(outputfile);
     ObjFileT_AddLine(outputfile, "</ul></div>");
 
     if (FEATURE_FPS_ENABLE) {
@@ -824,6 +828,8 @@ task GenerateReport() {
         ObjFileT_AddLine(outputfile, "<h3 class=\"header\" id=\"header_bombdeath\">Bomb & Death Monitoring</h3>");
         ObjFileT_AddLine(outputfile, APM_ChartGenBombDeath);
     }
+
+    APM_LogDataToFile(outputfile);
 
     // ---------------  End Reporting  ---------------
 
