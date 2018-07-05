@@ -81,13 +81,13 @@ AGGREGATE_LINE_OPACITY = GetAreaCommonData("dnhapm", "AggregateLineOpacity", 0.2
 
 Basic configuration for the APM allows you to set the Event that is used to trigger writing the report (defaults to `EV_USER_STAGE + 2048`), the output directory of the report (defaults to `GetCurrentScriptDirectory() ~ "./dnhapm-output/"`), and the name of the script within the report (defaults to `"--Unnamed Script--"`). 
 
-Aggregate, if enabled, will load past data in the OUTPUT_DIRECTORY into the graphs (defaults to `true`). The Output Name field refers to the unique identifier for the script and is used in output file filenames - important for the aggregation feature. For example, you could use `SetAreaCommonData("dnhapm", "OutputName", SCRIPT_NAME)` to have all past runs of SCRIPT_NAME aggregate into the same file regardless of which player did the run, or you could choose to have different difficulties aggregate independently while sharing the same output folder for all reports.
+Aggregate, if enabled, will load past data in `OUTPUT_DIRECTORY/apmcsv/` into the graphs (defaults to `true`). The Output Name field refers to the unique identifier for the script and is used in output file filenames - important for the aggregation feature. For example, you could use `SetAreaCommonData("dnhapm", "OutputName", SCRIPT_NAME)` to have all past runs of SCRIPT_NAME aggregate into the same file regardless of which player did the run, or you could choose to have different difficulties aggregate independently while sharing the same output folder for all reports.
 
 GRAPH_SCALE is the scale of the x axis of the graph (defaults to `2`, or two pixel per second). This means that a 5 minute script will fit into 300 pixels at a scale of 1, or 600 pixels at a scale of 2 (default).
 
 In regards to aggregate data, this program assumes that the settings for prior runs were the same (i.e. it assumes that update frequencies, graph scale, etc. were the same as the current run). Former runs will appear with opacity equal to AGGREGATE_LINE_OPACITY (defaults to alpha of 0.25). 
 
-It is recommended that you use a different output directory for each script to monitor. However, the APM supports using one directory for different scripts, as long as OUTPUT_NAME has been set.
+It is recommended that you use a different output directory for each script to monitor. However, the APM supports using one directory for different scripts, as long as OUTPUT_NAME has been set. If not set while aggregation is enabled, data from other scripts may make its way into the report.
 
 ## Specific Configuration
 
@@ -238,7 +238,6 @@ Current:
 * Step Monitoring (Nonspell and Spellcard Graph Overlays)  
 
 Planned: 
-* Item Monitoring (requires proper integrations)  
 * Combined graphs (stretch goal)  
 
 # Downloads

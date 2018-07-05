@@ -182,7 +182,7 @@ let FEATURE_BOMBDEATH_TEXTSIZE; // Radius of the bullet text size, in pixels
 /* ============================================================================== */
 // For now, we will store notes per-run and will not save them to disk.
 //let notefile = ObjFile_Create(OBJ_FILE_TEXT);
-//let notefilepath = OUTPUT_DIRECTORY ~ "apmnote-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".txt";
+//let notefilepath = OUTPUT_DIRECTORY ~ "apmcsv/"  ~ "apmnote-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".txt";
 //ObjFile_OpenNW(notefile, notefilepath);
 let notestring = "";
 
@@ -233,7 +233,7 @@ function NotesToSVG {
 /* ============================================================================== */
 // For now, we will store steps per-run and will not save them to disk.
 //let stepfile = ObjFile_Create(OBJ_FILE_TEXT);
-//let stepfilepath = OUTPUT_DIRECTORY ~ "apmstep-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".txt";
+//let stepfilepath = OUTPUT_DIRECTORY ~ "apmstep-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".txt";
 //ObjFile_OpenNW(stepfile, stepfilepath);
 let stepstring = "";
 
@@ -286,7 +286,7 @@ function StepsToSVG {
 task APM_StartFPS {
     // Create output file
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
-    let outputfilepath = OUTPUT_DIRECTORY ~ "apmfps-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".csv";
+    let outputfilepath = OUTPUT_DIRECTORY ~ "apmcsv/" ~ "apmfps-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".csv";
     ObjFile_OpenNW(outputfile, outputfilepath);
     let csvlog = ""; // CSV log
     let counter = 0;
@@ -347,7 +347,7 @@ function APM_ChartGenFPS {
 task APM_StartGraze {
     // Create output file
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
-    let outputfilepath = OUTPUT_DIRECTORY ~ "apmgraze-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".csv";
+    let outputfilepath = OUTPUT_DIRECTORY ~ "apmcsv/" ~ "apmgraze-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".csv";
     ObjFile_OpenNW(outputfile, outputfilepath);
     let csvlog = ""; // CSV log
     let counter = 0;
@@ -408,7 +408,7 @@ function APM_ChartGenGraze {
 task APM_StartScore {
     // Create output file
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
-    let outputfilepath = OUTPUT_DIRECTORY ~ "apmscore-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".csv";
+    let outputfilepath = OUTPUT_DIRECTORY ~ "apmcsv/" ~ "apmscore-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".csv";
     ObjFile_OpenNW(outputfile, outputfilepath);
     let csvlog = ""; // CSV log
     let counter = 0;
@@ -469,7 +469,7 @@ function APM_ChartGenScore {
 task APM_StartShotCount {
     // Create output file
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
-    let outputfilepath = OUTPUT_DIRECTORY ~ "apmscount-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".csv";
+    let outputfilepath = OUTPUT_DIRECTORY ~ "apmcsv/" ~ "apmscount-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".csv";
     ObjFile_OpenNW(outputfile, outputfilepath);
     let csvlog = ""; // CSV log
     let counter = 0;
@@ -532,7 +532,7 @@ let bombdeathfilepath;
 
 function LogBombDeath(bd) {
     let newbd = IntToString(elapsedtime) ~ "," ~ bd;
-    bombdeathfilepath = OUTPUT_DIRECTORY ~ "apmbd-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".txt";
+    bombdeathfilepath = OUTPUT_DIRECTORY ~ "apmcsv/" ~ "apmbd-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".txt";
     ObjFile_OpenNW(bombdeathfile, bombdeathfilepath);
     ObjFileT_AddLine(bombdeathfile, newbd);
     ObjFile_Store(bombdeathfile);
@@ -548,8 +548,8 @@ function APM_ChartGenBombDeath {
     let circles = [];
     // First, we will determine the scale of the x axis and log all of the necessary files.
     let maxtime = 0; // Will be scaled later
-    let currfilepath = OUTPUT_DIRECTORY ~ "apmbd-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".txt"; // Current run, for later reference
-    let filepathlist = GetFilePathList(OUTPUT_DIRECTORY);
+    let currfilepath = OUTPUT_DIRECTORY ~ "apmcsv/" ~ "apmbd-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".txt"; // Current run, for later reference
+    let filepathlist = GetFilePathList(OUTPUT_DIRECTORY ~ "apmcsv/");
     ascent(i in 0..length(filepathlist)) {
         // First, retrieve the file name
         let filename = parseFileName(filepathlist[i]);
@@ -649,8 +649,8 @@ function APM_ChartGenCommon(apmtype, updfreq, linecolor) {
     // First, we will determine the scale of the x and y axes and log all of the necessary files.
     let maxval = 0; // Maximum value of interest 
     let maxtime = 0; // Number of DATA POINTS collected - will be scaled later
-    let currfilepath = OUTPUT_DIRECTORY ~ apmtype ~ "-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".csv"; // Current run, for later reference
-    let filepathlist = GetFilePathList(OUTPUT_DIRECTORY);
+    let currfilepath = OUTPUT_DIRECTORY ~ "apmcsv/" ~ apmtype ~ "-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".csv"; // Current run, for later reference
+    let filepathlist = GetFilePathList(OUTPUT_DIRECTORY ~ "apmcsv/");
     ascent(i in 0..length(filepathlist)) {
         // First, retrieve the file name
         let filename = parseFileName(filepathlist[i]);
