@@ -30,6 +30,7 @@ let finished_shotcount = false;
 let EVENT_DNHAPM_FINALIZE; // Event to call via NotifyEvent/NotifyEventAll when the user wishes to generate the output report.
 let OUTPUT_DIRECTORY; // Directory to output the report to
 let SCRIPT_NAME; // Name of the script being monitored
+let OUTPUT_NAME; // Central part of the output file filename that uniquely identifies the settings for aggregation
 let ENABLE_AGGREGATE; // Whether or not to aggregate all data in directory when making graphs
 let GRAPH_SCALE; // Scale of the x axis on the graph. To be implemented later.
 let AGGREGATE_LINE_OPACITY; // Opacity of the paths representing former data points.
@@ -80,6 +81,7 @@ let FEATURE_BOMBDEATH_TEXTSIZE; // Radius of the bullet text size, in pixels
     EVENT_DNHAPM_FINALIZE = GetAreaCommonData("dnhapm", "FinalizeEvent", EV_USER_STAGE + 2048);
     OUTPUT_DIRECTORY = GetAreaCommonData("dnhapm", "OutputDirectory", currdir ~ "./dnhapm-output/");
     SCRIPT_NAME = GetAreaCommonData("dnhapm", "ScriptName", "--Unnamed Script--");
+    OUTPUT_NAME = GetAreaCommonData("dnhapm", "OutputName", SCRIPT_NAME ~ "_" ~ player);
     ENABLE_AGGREGATE = GetAreaCommonData("dnhapm", "EnableAggregate", true);
     GRAPH_SCALE = GetAreaCommonData("dnhapm", "GraphScale", 2);
     AGGREGATE_LINE_OPACITY = GetAreaCommonData("dnhapm", "AggregateLineOpacity", 0.25);
@@ -284,7 +286,7 @@ function StepsToSVG {
 task APM_StartFPS {
     // Create output file
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
-    let outputfilepath = OUTPUT_DIRECTORY ~ "apmfps-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".csv";
+    let outputfilepath = OUTPUT_DIRECTORY ~ "apmfps-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".csv";
     ObjFile_OpenNW(outputfile, outputfilepath);
     let csvlog = ""; // CSV log
     let counter = 0;
@@ -345,7 +347,7 @@ function APM_ChartGenFPS {
 task APM_StartGraze {
     // Create output file
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
-    let outputfilepath = OUTPUT_DIRECTORY ~ "apmgraze-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".csv";
+    let outputfilepath = OUTPUT_DIRECTORY ~ "apmgraze-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".csv";
     ObjFile_OpenNW(outputfile, outputfilepath);
     let csvlog = ""; // CSV log
     let counter = 0;
@@ -406,7 +408,7 @@ function APM_ChartGenGraze {
 task APM_StartScore {
     // Create output file
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
-    let outputfilepath = OUTPUT_DIRECTORY ~ "apmscore-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".csv";
+    let outputfilepath = OUTPUT_DIRECTORY ~ "apmscore-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".csv";
     ObjFile_OpenNW(outputfile, outputfilepath);
     let csvlog = ""; // CSV log
     let counter = 0;
@@ -467,7 +469,7 @@ function APM_ChartGenScore {
 task APM_StartShotCount {
     // Create output file
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
-    let outputfilepath = OUTPUT_DIRECTORY ~ "apmscount-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".csv";
+    let outputfilepath = OUTPUT_DIRECTORY ~ "apmscount-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".csv";
     ObjFile_OpenNW(outputfile, outputfilepath);
     let csvlog = ""; // CSV log
     let counter = 0;
@@ -530,7 +532,7 @@ let bombdeathfilepath;
 
 function LogBombDeath(bd) {
     let newbd = IntToString(elapsedtime) ~ "," ~ bd;
-    bombdeathfilepath = OUTPUT_DIRECTORY ~ "apmbd-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".txt";
+    bombdeathfilepath = OUTPUT_DIRECTORY ~ "apmbd-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".txt";
     ObjFile_OpenNW(bombdeathfile, bombdeathfilepath);
     ObjFileT_AddLine(bombdeathfile, newbd);
     ObjFile_Store(bombdeathfile);
@@ -546,7 +548,7 @@ function APM_ChartGenBombDeath {
     let circles = [];
     // First, we will determine the scale of the x axis and log all of the necessary files.
     let maxtime = 0; // Will be scaled later
-    let currfilepath = OUTPUT_DIRECTORY ~ "apmbd-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".txt"; // Current run, for later reference
+    let currfilepath = OUTPUT_DIRECTORY ~ "apmbd-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".txt"; // Current run, for later reference
     let filepathlist = GetFilePathList(OUTPUT_DIRECTORY);
     ascent(i in 0..length(filepathlist)) {
         // First, retrieve the file name
@@ -555,7 +557,8 @@ function APM_ChartGenBombDeath {
         let currtime = 0;
         //WriteLog("APM_ChartGenBombDeath DEBUG: testing on " ~ filename);
         // We only read the file if aggregating and a val file, or if it's the file we just set up.
-        if (filename[0..length("apmbd")] == "apmbd" && ENABLE_AGGREGATE || (filepathlist[i] == currfilepath)) {
+        let validstring = "apmbd-" ~ OUTPUT_NAME;
+        if (length(filename) >= length(validstring) && filename[0..length(validstring)] == validstring && ENABLE_AGGREGATE || (filepathlist[i] == currfilepath)) {
             //WriteLog("APM_ChartGenBombDeath DEBUG: running on " ~ filepathlist[i]);
             let handle = ObjFile_Create(OBJ_FILE_TEXT);
             let status = ObjFile_Open(handle, filepathlist[i]);
@@ -646,14 +649,15 @@ function APM_ChartGenCommon(apmtype, updfreq, linecolor) {
     // First, we will determine the scale of the x and y axes and log all of the necessary files.
     let maxval = 0; // Maximum value of interest 
     let maxtime = 0; // Number of DATA POINTS collected - will be scaled later
-    let currfilepath = OUTPUT_DIRECTORY ~ apmtype ~ "-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".csv"; // Current run, for later reference
+    let currfilepath = OUTPUT_DIRECTORY ~ apmtype ~ "-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".csv"; // Current run, for later reference
     let filepathlist = GetFilePathList(OUTPUT_DIRECTORY);
     ascent(i in 0..length(filepathlist)) {
         // First, retrieve the file name
         let filename = parseFileName(filepathlist[i]);
         //WriteLog("APM_ChartGenScore DEBUG: testing on " ~ filename);
         // We only read the file if aggregating and a val file, or if it's the file we just set up.
-        if (filename[0..length(apmtype)] == apmtype && ENABLE_AGGREGATE || (filepathlist[i] == currfilepath)) {
+        let validstring = apmtype ~ "-" ~ OUTPUT_NAME;
+        if (length(filename) >= length(validstring) && filename[0..length(validstring)] == validstring && ENABLE_AGGREGATE || (filepathlist[i] == currfilepath)) {
             //WriteLog("APM_ChartGenScore DEBUG: running on " ~ filepathlist[i]);
             // See if this one sets a new maxval
             let filedatapoints = CSVtoArray(filepathlist[i]);
@@ -764,7 +768,7 @@ task GenerateReport() {
     yield; //Wait for all tasks fo terminate and flush
 
     // Begin by creating our output HTML file.
-    let outputfilepath = OUTPUT_DIRECTORY ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".html";
+    let outputfilepath = OUTPUT_DIRECTORY ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".html";
     WriteLog("GenerateReport: Will write to " ~ outputfilepath);
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
     ObjFile_OpenNW(outputfile, outputfilepath);
