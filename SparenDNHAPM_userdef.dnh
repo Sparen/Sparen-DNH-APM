@@ -56,7 +56,7 @@ function APM_LogDataToFile(outputfile) {
 task APM_StartYOURFIELDHERE {
     // Create output file
     let outputfile = ObjFile_Create(OBJ_FILE_TEXT);
-    let outputfilepath = OUTPUT_DIRECTORY ~ "apmYFH-" ~ SCRIPT_NAME ~ "_" ~ player ~ "_" ~ starttime ~ ".csv"; // DNHAPM USER DEF: YFH should correspond to your field name
+    let outputfilepath = OUTPUT_DIRECTORY ~ "apmYFH-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".csv"; // DNHAPM USER DEF: YFH should correspond to your field name
     ObjFile_OpenNW(outputfile, outputfilepath);
     let csvlog = ""; // CSV log
     let counter = 0;
