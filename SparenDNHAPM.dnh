@@ -553,6 +553,16 @@ function LogBombDeath(bd) {
     ObjFile_Store(bombdeathfile);
 }
 
+// This task is necessary in order to log the end time of the script into the bomb/death files.
+// Without the knowledge of the end time, the bomb/death system cannot know the full length of the x axis.
+task APM_EndLogBombDeath {
+    bombdeathfilepath = OUTPUT_DIRECTORY ~ "apmcsv/" ~ "apmbd-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".txt";
+    ObjFile_OpenNW(bombdeathfile, bombdeathfilepath);
+    ObjFileT_AddLine(bombdeathfile, IntToString(elapsedtime) ~ "," ~ "end");
+    ObjFile_Store(bombdeathfile);
+    Obj_Delete(bombdeathfile);
+}
+
 // Returns the SVG chart for Bomb/Death in its entirety.
 function APM_ChartGenBombDeath {
     WriteLog("APM_ChartGenBombDeath: Starting.");
@@ -592,29 +602,31 @@ function APM_ChartGenBombDeath {
 
                 if (currtime > maxtime) {maxtime = currtime;} // Update max time if the time for any data point is greater than the current max
 
-                // Generate circles. Using opacity of 1 regardless of aggregation settings since past runs seperated physically.
-                // Radius is 8 for current run, 2 for past runs. Text only for current run; past runs offset by 32 pixels.
-                let basex = 64;
-                let nodex = basex + currtime/60 * GRAPH_SCALE;
-                let nodey = 64;
-                let radius = FEATURE_BOMBDEATH_MAINBULLETSIZE;
-                let circcolor = FEATURE_BOMBDEATH_DEATHCOLOR;
-                // If Bomb rather than Death
-                if (currbd == "b") {
-                    nodey = 192; 
-                    circcolor = FEATURE_BOMBDEATH_BOMBCOLOR;
-                }
-                // If different run (aggregate)
-                if (filepathlist[i] != currfilepath) {
-                    //WriteLog("APM_ChartGenBombDeath DEBUG: Aggregate Check: " ~ filepathlist[i] ~ " != " ~ currfilepath);
-                    nodey += 32;
-                    radius = FEATURE_BOMBDEATH_SUBBULLETSIZE;
-                }
-                let circtext = "<text x=\"" ~ ToString(nodex) ~ "\" y=\"" ~ ToString(nodey) ~ "\" font-family=\"Andale Mono, Monospace\" font-size=\"" ~ IntToString(FEATURE_BOMBDEATH_TEXTSIZE) ~ "px\" fill=\"#FFFFFF\" text-anchor=\"middle\" dominant-baseline=\"central\">" ~ currbd ~ "</text>";
-                let newcirc = "<circle r=\"" ~ ToString(radius) ~ "\" cx=\"" ~ ToString(nodex) ~ "\" cy=\"" ~ ToString(nodey) ~ "\" stroke=\"none\" fill=\"" ~ circcolor ~ "\"></circle>";
-                circles = circles ~ [newcirc];
-                if (filepathlist[i] == currfilepath) {
-                    circles = circles ~ [circtext];
+                if (currbd == "b" || currbd == "d") {
+                    // Generate circles. Using opacity of 1 regardless of aggregation settings since past runs seperated physically.
+                    // Radius is 8 for current run, 2 for past runs. Text only for current run; past runs offset by 32 pixels.
+                    let basex = 64;
+                    let nodex = basex + currtime/60 * GRAPH_SCALE;
+                    let nodey = 64;
+                    let radius = FEATURE_BOMBDEATH_MAINBULLETSIZE;
+                    let circcolor = FEATURE_BOMBDEATH_DEATHCOLOR;
+                    // If Bomb rather than Death
+                    if (currbd == "b") {
+                        nodey = 192; 
+                        circcolor = FEATURE_BOMBDEATH_BOMBCOLOR;
+                    }
+                    // If different run (aggregate)
+                    if (filepathlist[i] != currfilepath) {
+                        //WriteLog("APM_ChartGenBombDeath DEBUG: Aggregate Check: " ~ filepathlist[i] ~ " != " ~ currfilepath);
+                        nodey += 32;
+                        radius = FEATURE_BOMBDEATH_SUBBULLETSIZE;
+                    }
+                    let circtext = "<text x=\"" ~ ToString(nodex) ~ "\" y=\"" ~ ToString(nodey) ~ "\" font-family=\"Andale Mono, Monospace\" font-size=\"" ~ IntToString(FEATURE_BOMBDEATH_TEXTSIZE) ~ "px\" fill=\"#FFFFFF\" text-anchor=\"middle\" dominant-baseline=\"central\">" ~ currbd ~ "</text>";
+                    let newcirc = "<circle r=\"" ~ ToString(radius) ~ "\" cx=\"" ~ ToString(nodex) ~ "\" cy=\"" ~ ToString(nodey) ~ "\" stroke=\"none\" fill=\"" ~ circcolor ~ "\"></circle>";
+                    circles = circles ~ [newcirc];
+                    if (filepathlist[i] == currfilepath) {
+                        circles = circles ~ [circtext];
+                    }
                 }
             }
             Obj_Delete(handle);
@@ -796,6 +808,7 @@ function CSVtoArray(filepath) {
 
 task GenerateReport() {
     finished = true;
+    if (FEATURE_BOMBDEATH_ENABLE) {APM_EndLogBombDeath;} // Manually add end time to the Bomb/Death file. 
     yield; //Wait for all tasks fo terminate and flush
 
     // Begin by creating our output HTML file.
