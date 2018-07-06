@@ -18,6 +18,7 @@ let count = 0;
     SetAreaCommonData("dnhapm", "OutputName", "test1output_" ~ GetPlayerID());
     SetAreaCommonData("dnhapm", "GraphScale", 8);
     SetAreaCommonData("dnhapm", "UserText", "This metric was generated from test/Test1.dnh.<br>Testing User Text.");
+    SetAreaCommonData("dnhapm", "FPSMode", "MODE_CURRENTFPS");
     StartScript(apm);
 }
 
