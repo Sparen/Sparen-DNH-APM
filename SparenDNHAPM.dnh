@@ -290,8 +290,16 @@ task APM_StartFPS {
     ObjFile_OpenNW(outputfile, outputfilepath);
     let csvlog = ""; // CSV log
     let counter = 0;
+    let CORRECTION_FACTOR = 1.0325; // experimental 
+    let time_start;
+    let time_end;
+    let cfps;
     while(!finished) {
-        let cfps = GetCurrentFps();
+        time_start = GetStageTime();
+        loop(FEATURE_FPS_UPDATEFREQ){yield;}
+        time_end = GetStageTime();
+        cfps = CORRECTION_FACTOR * 1000 * FEATURE_FPS_UPDATEFREQ / (time_end - time_start);
+
         csvlog = csvlog ~ vtos("1.2f", cfps) ~ ",";
         // If csvlog is getting too long, push it to the File Object
         if (counter % 128 == 0) {
@@ -299,7 +307,6 @@ task APM_StartFPS {
             csvlog = "";
         }
         counter += 1;
-        loop(FEATURE_FPS_UPDATEFREQ){yield;}
     }
     // Flush to file
     ObjFileT_AddLine(outputfile, csvlog);
@@ -329,7 +336,10 @@ function APM_ChartGenFPS {
     // X Axis Labels
     svg = svg ~ SVGXAxisGen(maxtime * FEATURE_FPS_UPDATEFREQ/60);
     // Y Axis Labels
-    svg = svg ~ SVGYAxisGen(maxfps, "FPS");
+    let maxval = max(maxfps, 60);
+    svg = svg ~ SVGYAxisGen(maxval, "FPS");
+    // 60FPS line
+    svg = svg ~ "<path d=\"M 64 " ~ ToString(4 + (300 - 300*(60/maxval))) ~ " H 99999\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\" stroke-dasharray=\"4\" opacity=\"0.5\"></path>";
     // Add paths
     ascent(i in 0..length(paths)) {
         svg = svg ~ paths[i];
@@ -668,13 +678,14 @@ function APM_ChartGenCommon(apmtype, updfreq, linecolor) {
             // Generate path. If filepathlist[i] is the current file, then opacity is set to 1, AGGREGATE_LINE_OPACITY otherwise.
             let opacity = 1;
             if (filepathlist[i] != currfilepath) {opacity = AGGREGATE_LINE_OPACITY;}
-            let newpath = "<path d=\"M 64 304 ";
+            let newpath = "<path d=\"";
             // Iterate over the data points. Recall that by default, a second is one pixel.
             // Also recall that each data point is updfreq frames apart.
             let basex = 64;
             ascent(j in 0..length(filedatapoints)) {
                 let nodex = basex + j * updfreq/60 * GRAPH_SCALE;
                 let nodey = 304 - 300 * ator(filedatapoints[j])/maxval;
+                if(j==0){ newpath = newpath ~ "M " ~ ToString(nodex) ~ " " ~ ToString(nodey) ~ " "; }
                 newpath = newpath ~ "L " ~ ToString(nodex) ~ " " ~ ToString(nodey) ~ " ";
             }
             newpath = newpath ~ "\" stroke=\"" ~ linecolor ~ "\" stroke-width=\"1\" fill=\"none\" opacity=\"" ~ ToString(opacity) ~ "\"></path>";
