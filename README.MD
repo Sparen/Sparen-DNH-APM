@@ -106,11 +106,12 @@ This section will be populated with data as new features are implemented.
 FEATURE_FPS_ENABLE = GetAreaCommonData("dnhapm", "FPSEnable", true);
 FEATURE_FPS_UPDATEFREQ = GetAreaCommonData("dnhapm", "FPSUpdateFreq", 10);
 FEATURE_FPS_LINECOLOR = GetAreaCommonData("dnhapm", "FPSLineColor", "#2266FF");
+FEATURE_FPS_ENABLE_LINE = GetAreaCommonData("dnhapm", "FPSEnableLine", true);
 ```
 
 For FPS Monitoring, there are three fields - one for enabling the feature, one for the update frequency (defaults to every 10 frames), and one for the line color in the graphs (defaults to #2266FF).
 
-For FPS Monitoring, note that Danmakufu internally updates FPS infrequently, so even with an update frequency of every 10 frames, you will get very straight lines.
+FPS Monitoring was changed from `GetCurrentFPS()` to a method that tracks the actual FPS by Drake on July 6, 2018. Note that this method is approximately half a pixel (default scaling) off from the rest of the monitoring fields. This addition also adds a dashed line at 60 FPS, which can be disabled via the `FPSEnableLine` CommonData.
 
 ### Graze Monitoring
 ```java
@@ -119,7 +120,7 @@ FEATURE_GRAZE_UPDATEFREQ = GetAreaCommonData("dnhapm", "GrazeUpdateFreq", 10);
 FEATURE_GRAZE_LINECOLOR = GetAreaCommonData("dnhapm", "GrazeLineColor", "#887777");
 ```
 
-For Graze Monitoring, similarly to FPS Monitoring, there are three fields - one for enabling the feature, one for the update frequency (defaults to every 10 frames), and one for the line color in the graphs (defaults to #887777).
+For Graze Monitoring, similarly to FPS Monitoring, there are three primary fields - one for enabling the feature, one for the update frequency (defaults to every 10 frames), and one for the line color in the graphs (defaults to #887777).
 
 For Graze Monitoring, note that the default update frequency will result in a less smooth chart, but should nevertheless provide a good approximation for longer scripts.
 
@@ -143,7 +144,7 @@ FEATURE_SHOTCOUNT_UPDATEFREQ = GetAreaCommonData("dnhapm", "ShotCountUpdateFreq"
 FEATURE_SHOTCOUNT_LINECOLOR = GetAreaCommonData("dnhapm", "ShotCountLineColor", "#FFCC55");
 ```
 
-For Shot Count Monitoring, similarly to the other monitoring systems, there are three fields - one for enabling the feature, one for the update frequency (defaults to every 10 frames), and one for the line color in the graphs (defaults to #FFCC55).
+For Shot Count Monitoring, similarly to the other monitoring systems, there are three primary fields - one for enabling the feature, one for the update frequency (defaults to every 10 frames), and one for the line color in the graphs (defaults to #FFCC55).
 
 For Shot Count Monitoring, like Graze and Score Monitoring, note that the default update frequency will result in a less smooth chart, but should nevertheless provide a good approximation for longer scripts.
 
@@ -246,5 +247,5 @@ Official Releases are provided via GitHub releases.
 
 # Contributing and Credits
 
-Improvements and bug reports should be submitted via GitHub issues.
+Improvements and bug reports should be submitted via GitHub issues. Pull requests will be reviewed.
 

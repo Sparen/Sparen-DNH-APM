@@ -1,8 +1,9 @@
 /* ******************************************************************
 * Sparen's Danmakufu ph3 Application Monitoring System
 * For use with Touhou Danmakufu ph3
-* (C) Sparen of Iria 2018
-* Version 0.5
+* (C) Sparen of Iria 2018 (as well as contributions from the Danmakufu Community)
+* Repo: https://github.com/Sparen/Sparen-DNH-APM
+* Version 0.6-pre
 ****************************************************************** */
 
 /* ******************************************************************
@@ -49,6 +50,7 @@ let ENABLE_STEP_LINE; // Whether or not to render line at top of graph for step.
 let FEATURE_FPS_ENABLE; // Enable or disable FPS logging
 let FEATURE_FPS_UPDATEFREQ; // Update frequency, in frames.
 let FEATURE_FPS_LINECOLOR; // Color of the line, in HTML supported color
+let FEATURE_FPS_ENABLE_LINE; // Enable or disable line at 60 FPS
 
 let FEATURE_GRAZE_ENABLE; // Enable or disable Graze logging
 let FEATURE_GRAZE_UPDATEFREQ; // Update frequency, in frames.
@@ -99,6 +101,7 @@ let FEATURE_BOMBDEATH_TEXTSIZE; // Radius of the bullet text size, in pixels
     FEATURE_FPS_ENABLE = GetAreaCommonData("dnhapm", "FPSEnable", true);
     FEATURE_FPS_UPDATEFREQ = GetAreaCommonData("dnhapm", "FPSUpdateFreq", 10);
     FEATURE_FPS_LINECOLOR = GetAreaCommonData("dnhapm", "FPSLineColor", "#2266FF");
+    FEATURE_FPS_ENABLE_LINE = GetAreaCommonData("dnhapm", "FPSEnableLine", true);
 
     FEATURE_GRAZE_ENABLE = GetAreaCommonData("dnhapm", "GrazeEnable", true);
     FEATURE_GRAZE_UPDATEFREQ = GetAreaCommonData("dnhapm", "GrazeUpdateFreq", 10);
@@ -339,7 +342,9 @@ function APM_ChartGenFPS {
     let maxval = max(maxfps, 60);
     svg = svg ~ SVGYAxisGen(maxval, "FPS");
     // 60FPS line
-    svg = svg ~ "<path d=\"M 64 " ~ ToString(4 + (300 - 300*(60/maxval))) ~ " H 99999\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\" stroke-dasharray=\"4\" opacity=\"0.5\"></path>";
+    if (FEATURE_FPS_ENABLE_LINE) {
+        svg = svg ~ "<path d=\"M 64 " ~ ToString(4 + (300 - 300*(60/maxval))) ~ " H 99999\" stroke=\"#AAAAAA\" stroke-width=\"1\" fill=\"none\" stroke-dasharray=\"4\" opacity=\"0.5\"></path>";
+    }
     // Add paths
     ascent(i in 0..length(paths)) {
         svg = svg ~ paths[i];
