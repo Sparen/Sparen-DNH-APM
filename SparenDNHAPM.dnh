@@ -837,7 +837,7 @@ task GenerateReport() {
 
     if (FEATURE_FPS_ENABLE) {
         while (!finished_fps) {yield;} //Wait for file to be written before reading
-        ObjFileT_AddLine(outputfile, "<h3 class=\"header\" id=\"header_fps\">FPS Monitoring</h3><div class=\"bodydiv\"><p>Note: FPS values recorded here may be lower than usual due to the overhead caused by the APM.</p></div>");
+        ObjFileT_AddLine(outputfile, "<h3 class=\"header\" id=\"header_fps\">FPS Monitoring</h3><div class=\"bodydiv\"><p>Note: FPS values recorded here may be lower than usual due to the overhead caused by the APM.<br>In addition, the values here are not the values associated with <code>GetCurrentFPS()</code> and are instead manually calculated per FEATURE_FPS_UPDATEFREQ.</p></div>");
         ObjFileT_AddLine(outputfile, APM_ChartGenFPS);
     }
 
