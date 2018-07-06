@@ -666,6 +666,8 @@ function APM_ChartGenCommon(apmtype, updfreq, linecolor) {
     let maxtime = 0; // Number of DATA POINTS collected - will be scaled later
     let currfilepath = OUTPUT_DIRECTORY ~ "apmcsv/" ~ apmtype ~ "-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".csv"; // Current run, for later reference
     let filepathlist = GetFilePathList(OUTPUT_DIRECTORY ~ "apmcsv/");
+    let numpaths = 0; // Number of paths we will need to generate.
+    // Iterate through all files, and determine the maxtime and maxval for x/y axis scaling. Also, save data points to CommonData.
     ascent(i in 0..length(filepathlist)) {
         // First, retrieve the file name
         let filename = parseFileName(filepathlist[i]);
@@ -680,22 +682,35 @@ function APM_ChartGenCommon(apmtype, updfreq, linecolor) {
             if (filemaxval > maxval) {maxval = filemaxval;}
             // See if this one sets a new maxtime
             if (length(filedatapoints) > maxtime) {maxtime = length(filedatapoints);}
-            // Generate path. If filepathlist[i] is the current file, then opacity is set to 1, AGGREGATE_LINE_OPACITY otherwise.
+            // Save data points to CommonData for use later in path generation
+            SetAreaCommonData("dnhapm", "temp_" ~ apmtype ~ "_" ~ IntToString(numpaths), filedatapoints);
+            // If filepathlist[i] is the current file, then opacity is set to 1, AGGREGATE_LINE_OPACITY otherwise.
             let opacity = 1;
             if (filepathlist[i] != currfilepath) {opacity = AGGREGATE_LINE_OPACITY;}
-            let newpath = "<path d=\"";
-            // Iterate over the data points. Recall that by default, a second is one pixel.
-            // Also recall that each data point is updfreq frames apart.
-            let basex = 64;
-            ascent(j in 0..length(filedatapoints)) {
-                let nodex = basex + j * updfreq/60 * GRAPH_SCALE;
-                let nodey = 304 - 300 * ator(filedatapoints[j])/maxval;
-                if(j==0){ newpath = newpath ~ "M " ~ ToString(nodex) ~ " " ~ ToString(nodey) ~ " "; }
-                newpath = newpath ~ "L " ~ ToString(nodex) ~ " " ~ ToString(nodey) ~ " ";
-            }
-            newpath = newpath ~ "\" stroke=\"" ~ linecolor ~ "\" stroke-width=\"1\" fill=\"none\" opacity=\"" ~ ToString(opacity) ~ "\"></path>";
-            paths = paths ~ [newpath];
+            SetAreaCommonData("dnhapm", "temp_" ~ apmtype ~ "_opac_" ~ IntToString(numpaths), opacity);
+            numpaths += 1;
         }
+    }
+    // Generate paths from saved CommonData now that we know the final x and y axis scales.
+    ascent(i in 0..numpaths) {
+        let pathdata = GetAreaCommonData("dnhapm", "temp_" ~ apmtype ~ "_" ~ IntToString(i), []);
+        let pathopac = GetAreaCommonData("dnhapm", "temp_" ~ apmtype ~ "_opac_" ~ IntToString(i), []);
+        // Generate path. 
+        let newpath = "<path d=\"";
+        // Iterate over the data points. Recall that by default, a second is one pixel.
+        // Also recall that each data point is updfreq frames apart.
+        let basex = 64;
+        ascent(j in 0..length(pathdata)) {
+            let nodex = basex + j * updfreq/60 * GRAPH_SCALE;
+            let nodey = 304 - 300 * ator(pathdata[j])/maxval;
+            // First point should never start at (64, 304) unless the value is 0.
+            if (j == 0) {
+                newpath = newpath ~ "M " ~ ToString(nodex) ~ " " ~ ToString(nodey) ~ " ";
+            }
+            newpath = newpath ~ "L " ~ ToString(nodex) ~ " " ~ ToString(nodey) ~ " ";
+        }
+        newpath = newpath ~ "\" stroke=\"" ~ linecolor ~ "\" stroke-width=\"1\" fill=\"none\" opacity=\"" ~ ToString(pathopac) ~ "\"></path>";
+        paths = paths ~ [newpath];
     }
     // Return path, maxval, and maxtime data
     SetAreaCommonData("dnhapm", "cgcpath_" ~ apmtype, paths);
