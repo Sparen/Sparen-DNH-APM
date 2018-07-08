@@ -3,7 +3,7 @@
 * For use with Touhou Danmakufu ph3
 * (C) Sparen of Iria 2018 (as well as contributions from the Danmakufu Community)
 * Repo: https://github.com/Sparen/Sparen-DNH-APM
-* Version 0.6-pre
+* Version 0.6
 ****************************************************************** */
 
 /* ******************************************************************
@@ -103,7 +103,7 @@ let FEATURE_BOMBDEATH_TEXTSIZE; // Radius of the bullet text size, in pixels
     FEATURE_FPS_UPDATEFREQ = GetAreaCommonData("dnhapm", "FPSUpdateFreq", 10);
     FEATURE_FPS_LINECOLOR = GetAreaCommonData("dnhapm", "FPSLineColor", "#2266FF");
     FEATURE_FPS_ENABLE_LINE = GetAreaCommonData("dnhapm", "FPSEnableLine", true);
-    FEATURE_FPS_MODE = GetAreaCommonData("dnhapm", "FPSMode", "MODE_STAGETIME");
+    FEATURE_FPS_MODE = GetAreaCommonData("dnhapm", "FPSMode", "MODE_CURRENTFPS");
 
     FEATURE_GRAZE_ENABLE = GetAreaCommonData("dnhapm", "GrazeEnable", true);
     FEATURE_GRAZE_UPDATEFREQ = GetAreaCommonData("dnhapm", "GrazeUpdateFreq", 10);

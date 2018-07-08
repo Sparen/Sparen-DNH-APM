@@ -107,12 +107,12 @@ FEATURE_FPS_ENABLE = GetAreaCommonData("dnhapm", "FPSEnable", true);
 FEATURE_FPS_UPDATEFREQ = GetAreaCommonData("dnhapm", "FPSUpdateFreq", 10);
 FEATURE_FPS_LINECOLOR = GetAreaCommonData("dnhapm", "FPSLineColor", "#2266FF");
 FEATURE_FPS_ENABLE_LINE = GetAreaCommonData("dnhapm", "FPSEnableLine", true);
-FEATURE_FPS_MODE = GetAreaCommonData("dnhapm", "FPSMode", "MODE_STAGETIME");
+FEATURE_FPS_MODE = GetAreaCommonData("dnhapm", "FPSMode", "MODE_CURRENTFPS");
 ```
 
 For FPS Monitoring, there are three fields - one for enabling the feature, one for the update frequency (defaults to every 10 frames), and one for the line color in the graphs (defaults to #2266FF).
 
-As of July 6, 2018, there are two different options for FPS Logging. One is the original `GetCurrentFps` method (use `"MODE_CURRENTFPS"`). The other (default) option is `"MODE_STAGETIME"`, implemented by Drake. The former uses Danmakufu's built-in system and updates infrequently due to Danmakufu's built-in FPS update speed, while the latter can be noisy and is always a little off of the actual FPS. 
+As of July 6, 2018, there are two different options for FPS Logging. One is the original (default) `GetCurrentFps` method (use `"MODE_CURRENTFPS"`). The other option is `"MODE_STAGETIME"`, implemented by Drake. The former uses Danmakufu's built-in system and updates infrequently due to Danmakufu's built-in FPS update speed, while the latter can be noisy and is always a little off of the actual FPS, requiring a correction factor that may depend on the computer Danmakufu is being run on. 
 
 FPS monitoring is approximately half a pixel (default scaling) off from the rest of the monitoring fields. There is also a dashed line at 60 FPS, which can be disabled via the `FPSEnableLine` CommonData.
 
