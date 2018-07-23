@@ -52,6 +52,7 @@ let FEATURE_FPS_UPDATEFREQ; // Update frequency, in frames.
 let FEATURE_FPS_LINECOLOR; // Color of the line, in HTML supported color
 let FEATURE_FPS_ENABLE_LINE; // Enable or disable line at 60 FPS
 let FEATURE_FPS_MODE; // GetCurrentFPS or GetStageTime
+let FEATURE_FPS_CORRECTIONFACTOR; // Correction factor for GetStageTime mode
 
 let FEATURE_GRAZE_ENABLE; // Enable or disable Graze logging
 let FEATURE_GRAZE_UPDATEFREQ; // Update frequency, in frames.
@@ -104,6 +105,7 @@ let FEATURE_BOMBDEATH_TEXTSIZE; // Radius of the bullet text size, in pixels
     FEATURE_FPS_LINECOLOR = GetAreaCommonData("dnhapm", "FPSLineColor", "#2266FF");
     FEATURE_FPS_ENABLE_LINE = GetAreaCommonData("dnhapm", "FPSEnableLine", true);
     FEATURE_FPS_MODE = GetAreaCommonData("dnhapm", "FPSMode", "MODE_CURRENTFPS");
+    FEATURE_FPS_CORRECTIONFACTOR = GetAreaCommonData("dnhapm", "FPSCorrFactor", 1.0325);
 
     FEATURE_GRAZE_ENABLE = GetAreaCommonData("dnhapm", "GrazeEnable", true);
     FEATURE_GRAZE_UPDATEFREQ = GetAreaCommonData("dnhapm", "GrazeUpdateFreq", 10);
@@ -299,7 +301,6 @@ task APM_StartFPS {
     ObjFile_OpenNW(outputfile, outputfilepath);
     let csvlog = ""; // CSV log
     let counter = 0;
-    let CORRECTION_FACTOR = 1.0325; // experimental 
     let time_start;
     let time_end;
     let cfps;
@@ -308,12 +309,12 @@ task APM_StartFPS {
         loop(FEATURE_FPS_UPDATEFREQ){yield;}
         time_end = GetStageTime();
         if (FEATURE_FPS_MODE == "MODE_STAGETIME") {
-            cfps = CORRECTION_FACTOR * 1000 * FEATURE_FPS_UPDATEFREQ / (time_end - time_start);
+            cfps = FEATURE_FPS_CORRECTIONFACTOR * 1000 * FEATURE_FPS_UPDATEFREQ / (time_end - time_start);
         } else if (FEATURE_FPS_MODE == "MODE_CURRENTFPS") {
             cfps = GetCurrentFps();
         } else {
-            // Instead of crashing, just default.
-            cfps = CORRECTION_FACTOR * 1000 * FEATURE_FPS_UPDATEFREQ / (time_end - time_start);
+            // Instead of crashing on an unknown mode, just default.
+            cfps = GetCurrentFps();
         }
 
         csvlog = csvlog ~ vtos("1.2f", cfps) ~ ",";
