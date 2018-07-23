@@ -3,7 +3,7 @@
 * For use with Touhou Danmakufu ph3
 * (C) Sparen of Iria 2018 (as well as contributions from the Danmakufu Community)
 * Repo: https://github.com/Sparen/Sparen-DNH-APM
-* Version 0.6
+* Version 1.0-pre
 ****************************************************************** */
 
 /* ******************************************************************
@@ -192,10 +192,12 @@ let FEATURE_BOMBDEATH_TEXTSIZE; // Radius of the bullet text size, in pixels
 let notestring = "";
 
 function LogNote(key, val) {
-    let newnote = IntToString(elapsedtime) ~ "," ~ key ~ "," ~ val;
-    //ObjFileT_AddLine(notefile, newnote);
-    //ObjFile_Store(notefile);
-    notestring = notestring ~ newnote ~ "|";
+    if (!finished) {
+        let newnote = IntToString(elapsedtime) ~ "," ~ key ~ "," ~ val;
+        //ObjFileT_AddLine(notefile, newnote);
+        //ObjFile_Store(notefile);
+        notestring = notestring ~ newnote ~ "|";
+    }
 }
 
 // Takes the notes and generates SVG paths and text for them.
@@ -243,10 +245,12 @@ function NotesToSVG {
 let stepstring = "";
 
 function LogStep(str) {
-    let newstep = IntToString(elapsedtime) ~ "," ~ str;
-    //ObjFileT_AddLine(stepfile, newstep);
-    //ObjFile_Store(stepfile);
-    stepstring = stepstring ~ newstep ~ "|";
+    if (!finished) {
+        let newstep = IntToString(elapsedtime) ~ "," ~ str;
+        //ObjFileT_AddLine(stepfile, newstep);
+        //ObjFile_Store(stepfile);
+        stepstring = stepstring ~ newstep ~ "|";
+    }
 }
 
 // Takes the steps and generates SVG paths and text for them.
@@ -555,11 +559,13 @@ let bombdeathfile = ObjFile_Create(OBJ_FILE_TEXT);
 let bombdeathfilepath;
 
 function LogBombDeath(bd) {
-    let newbd = IntToString(elapsedtime) ~ "," ~ bd;
-    bombdeathfilepath = OUTPUT_DIRECTORY ~ "apmcsv/" ~ "apmbd-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".txt";
-    ObjFile_OpenNW(bombdeathfile, bombdeathfilepath);
-    ObjFileT_AddLine(bombdeathfile, newbd);
-    ObjFile_Store(bombdeathfile);
+    if (!finished) {
+        let newbd = IntToString(elapsedtime) ~ "," ~ bd;
+        bombdeathfilepath = OUTPUT_DIRECTORY ~ "apmcsv/" ~ "apmbd-" ~ OUTPUT_NAME ~ "_" ~ starttime ~ ".txt";
+        ObjFile_OpenNW(bombdeathfile, bombdeathfilepath);
+        ObjFileT_AddLine(bombdeathfile, newbd);
+        ObjFile_Store(bombdeathfile);
+    }
 }
 
 // This task is necessary in order to log the end time of the script into the bomb/death files.
@@ -906,6 +912,11 @@ task GenerateReport() {
     ObjFile_Store(outputfile);
     yield;
     Obj_Delete(outputfile);
+
+    // Buffer
+    yield;
+    // Close script so that events are no longer listened to
+    CloseScript(GetOwnScriptID);
 }
 
 /* ================================================================================== */
